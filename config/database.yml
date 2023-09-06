@@ -1,0 +1,17 @@
+default: &default
+  adapter: postgresql
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: <%= ENV['POSTGRES_USER'] %>
+  password: <%= ENV['POSTGRES_PASSWORD'] %>
+
+test:
+  <<: *default
+  database: social-api-test
+
+development:
+  <<: *default
+  database: social-api-development
+
+production:
+  <<: *default
+  database: social-api-production
