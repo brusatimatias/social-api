@@ -1,0 +1,68 @@
+require "rails_helper"
+
+RSpec.describe "Api::V1::Posts", type: :request do
+  describe "GET /api/v1/posts" do
+    it "lists posts" do
+      get api_v1_posts_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.map { |post| post["content"] }).to include(posts(:one).content)
+    end
+  end
+
+  describe "POST /api/v1/posts" do
+    it "creates a post" do
+      expect do
+        post api_v1_posts_path, params: {
+          post: { content: "A new post", user_id: users(:one).id }
+        }, as: :json
+      end.to change(Post, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body["content"]).to eq("A new post")
+      expect(response.parsed_body["user_id"]).to eq(users(:one).id)
+      expect(response.parsed_body["visibility"]).to eq("public")
+      expect(response.parsed_body["status"]).to eq("published")
+    end
+
+    it "rejects a post without content" do
+      expect do
+        post api_v1_posts_path, params: {
+          post: { user_id: users(:one).id }
+        }, as: :json
+      end.not_to change(Post, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body["errors"]).not_to be_empty
+    end
+  end
+
+  describe "resource actions" do
+    it "shows a post" do
+      get api_v1_post_path(posts(:one).id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["content"]).to eq(posts(:one).content)
+    end
+
+    it "updates a post" do
+      patch api_v1_post_path(posts(:one).id), params: {
+        post: { content: "An updated post", visibility: "private", status: "archived" }
+      }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["content"]).to eq("An updated post")
+      expect(response.parsed_body["visibility"]).to eq("private")
+      expect(response.parsed_body["status"]).to eq("archived")
+      expect(response.parsed_body["edited_at"]).not_to be_nil
+    end
+
+    it "deletes a post" do
+      expect do
+        delete api_v1_post_path(posts(:one).id)
+      end.to change(Post, :count).by(-1)
+
+      expect(response).to have_http_status(:no_content)
+    end
+  end
+end

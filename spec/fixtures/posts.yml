@@ -1,0 +1,11 @@
+one:
+  content: "A first post"
+  visibility: public
+  status: published
+  user: one
+
+two:
+  content: "Another post"
+  visibility: followers
+  status: draft
+  user: two
