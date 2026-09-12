@@ -7,6 +7,15 @@ RSpec.describe "Api::V1::Posts", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.map { |post| post["content"] }).to include(posts(:one).content)
+      expect(response.parsed_body.first).to have_key("comments")
+      expect(response.parsed_body.first).to have_key("likes")
+    end
+
+    it "filters posts by status" do
+      get api_v1_posts_path, params: { status: "draft" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.map { |post| post["id"] }).to eq([posts(:two).id])
     end
   end
 
@@ -43,6 +52,9 @@ RSpec.describe "Api::V1::Posts", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["content"]).to eq(posts(:one).content)
+      expect(response.parsed_body["comments"].map { |comment| comment["content"] })
+        .to include(comments(:one).content)
+      expect(response.parsed_body["likes"].map { |like| like["id"] }).to include(likes(:one).id)
     end
 
     it "updates a post" do
@@ -62,7 +74,8 @@ RSpec.describe "Api::V1::Posts", type: :request do
         delete api_v1_post_path(posts(:one).id), headers: auth_headers
       end.to change(Post, :count).by(-1)
 
-      expect(response).to have_http_status(:no_content)
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["id"]).to eq(posts(:one).id)
     end
   end
 end

@@ -6,11 +6,12 @@ module Api
       before_action :authorize_post!, only: %i[update destroy]
 
       def index
-        render json: Post.all
+        posts = params[:status].present? ? Post.where(status: params[:status]) : Post.all
+        render json: posts, include: { comments: { include: :user }, likes: { include: :user } }
       end
 
       def show
-        render json: @post
+        render json: @post, include: { comments: { include: :user }, likes: { include: :user } }
       end
 
       def create
@@ -32,8 +33,11 @@ module Api
       end
 
       def destroy
-        @post.destroy
-        head :no_content
+        if @post.destroy
+          render json: @post
+        else
+          render json: { errors: @post.errors.full_messages }, status: :unprocessable_entity
+        end
       end
 
       private

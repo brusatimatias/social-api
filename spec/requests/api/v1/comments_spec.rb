@@ -1,16 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Api::V1::Comments", type: :request do
-  describe "GET /api/v1/posts/:post_id/comments" do
-    it "lists comments" do
-      get api_v1_post_comments_path(posts(:one).id)
-
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.map { |comment| comment["content"] })
-        .to include(comments(:one).content)
-    end
-  end
-
   describe "POST /api/v1/posts/:post_id/comments" do
     it "creates a comment" do
       expect do
@@ -52,7 +42,8 @@ RSpec.describe "Api::V1::Comments", type: :request do
         delete api_v1_post_comment_path(posts(:one).id, comments(:one).id), headers: auth_headers(users(:two))
       end.to change(Comment, :count).by(-1)
 
-      expect(response).to have_http_status(:no_content)
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["id"]).to eq(comments(:one).id)
     end
   end
 end

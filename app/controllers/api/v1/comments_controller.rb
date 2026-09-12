@@ -6,10 +6,6 @@ module Api
       before_action :set_comment, only: %i[update destroy]
       before_action :authorize_comment!, only: %i[update destroy]
 
-      def index
-        render json: @post.comments.includes(:user)
-      end
-
       def create
         comment = current_user.comments.build(comment_params.merge(post: @post))
 
@@ -29,8 +25,11 @@ module Api
       end
 
       def destroy
-        @comment.destroy
-        head :no_content
+        if @comment.destroy
+          render json: @comment
+        else
+          render json: { errors: @comment.errors.full_messages }, status: :unprocessable_entity
+        end
       end
 
       private

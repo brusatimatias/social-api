@@ -6,10 +6,6 @@ module Api
       before_action :set_like, only: :destroy
       before_action :authorize_like!, only: :destroy
 
-      def index
-        render json: @post.likes.includes(:user)
-      end
-
       def create
         like = current_user.likes.build(post: @post)
 
@@ -21,8 +17,11 @@ module Api
       end
 
       def destroy
-        @like.destroy
-        head :no_content
+        if @like.destroy
+          render json: @like
+        else
+          render json: { errors: @like.errors.full_messages }, status: :unprocessable_entity
+        end
       end
 
       private

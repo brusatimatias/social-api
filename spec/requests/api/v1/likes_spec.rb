@@ -1,15 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Api::V1::Likes", type: :request do
-  describe "GET /api/v1/posts/:post_id/likes" do
-    it "lists likes" do
-      get api_v1_post_likes_path(posts(:one).id)
-
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.map { |like| like["id"] }).to include(likes(:one).id)
-    end
-  end
-
   describe "POST /api/v1/posts/:post_id/likes" do
     it "creates a like" do
       expect do
@@ -37,7 +28,8 @@ RSpec.describe "Api::V1::Likes", type: :request do
         delete api_v1_post_like_path(posts(:one).id, likes(:one).id), headers: auth_headers(users(:two))
       end.to change(Like, :count).by(-1)
 
-      expect(response).to have_http_status(:no_content)
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["id"]).to eq(likes(:one).id)
     end
   end
 end

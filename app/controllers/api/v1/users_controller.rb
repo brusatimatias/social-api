@@ -1,7 +1,7 @@
 module Api
   module V1
     class UsersController < ApplicationController
-      before_action :authenticate_user!, only: %i[update destroy follow unfollow]
+      before_action :authenticate_user!, only: %i[index update destroy follow unfollow]
       before_action :set_user, only: %i[show update destroy]
       before_action :set_user_for_relationships, only: %i[followers following follow unfollow]
       before_action :authorize_user!, only: %i[update destroy]
@@ -34,8 +34,12 @@ module Api
 
       def unfollow
         relationship = current_user.following_relationships.find_by!(following: @user)
-        relationship.destroy
-        render json: relationship
+
+        if relationship.destroy
+          render json: relationship
+        else
+          render json: { errors: relationship.errors.full_messages }, status: :unprocessable_entity
+        end
       end
 
       def update
@@ -47,8 +51,11 @@ module Api
       end
 
       def destroy
-        @user.destroy
-        head :no_content
+        if @user.destroy
+          render json: @user
+        else
+          render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+        end
       end
 
       private
