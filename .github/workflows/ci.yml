@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  rspec:
     runs-on: ubuntu-latest
 
     services:
@@ -44,6 +44,19 @@ jobs:
 
       - name: Run RSpec
         run: bundle exec rspec
+
+  rubocop:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2.1"
+          bundler-cache: true
 
       - name: Run RuboCop
         run: bundle exec rubocop
