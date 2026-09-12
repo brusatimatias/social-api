@@ -88,7 +88,7 @@ GEM
     irb (1.8.1)
       rdoc
       reline (>= 0.3.8)
-    json (3.0.2)
+    json (2.6.3)
     language_server-protocol (3.17.0.6)
     lint_roller (1.1.0)
     loofah (2.21.3)
@@ -228,6 +228,7 @@ DEPENDENCIES
   bcrypt (~> 3.1.7)
   bootsnap
   debug
+  json (< 3.0)
   pg (~> 1.5, >= 1.5.4)
   puma (~> 5.0)
   rails (~> 7.0.4, >= 7.0.4.3)
