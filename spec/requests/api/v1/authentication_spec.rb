@@ -64,6 +64,23 @@ RSpec.describe "Api::V1::Authentication", type: :request do
       expect(response.parsed_body["email"]).to eq(users(:one).email)
     end
 
+    it "updates the authenticated user" do
+      patch api_v1_auth_me_path, params: { user: { name: "Augusta" } },
+        headers: auth_headers, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["name"]).to eq("Augusta")
+    end
+
+    it "deletes the authenticated user" do
+      expect do
+        delete api_v1_auth_me_path, headers: auth_headers
+      end.to change(User, :count).by(-1)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["id"]).to eq(users(:one).id)
+    end
+
     it "rejects requests without a valid token" do
       get api_v1_auth_me_path
 

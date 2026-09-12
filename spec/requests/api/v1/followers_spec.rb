@@ -1,6 +1,38 @@
 require "rails_helper"
 
 RSpec.describe "Api::V1::Followers", type: :request do
+  describe "GET /api/v1/users/followers" do
+    it "lists the authenticated user's followers" do
+      get followers_api_v1_users_path, headers: auth_headers(users(:one))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.map { |user| user["id"] }).to include(users(:two).id)
+    end
+
+    it "lists another user's followers by user_id" do
+      get followers_api_v1_users_path, params: { user_id: users(:one).uuid }, headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.map { |user| user["id"] }).to include(users(:two).id)
+    end
+  end
+
+  describe "GET /api/v1/users/following" do
+    it "lists the authenticated user's following" do
+      get following_api_v1_users_path, headers: auth_headers(users(:one))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.map { |user| user["id"] }).to include(users(:two).id)
+    end
+
+    it "lists another user's following by user_id" do
+      get following_api_v1_users_path, params: { user_id: users(:one).uuid }, headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.map { |user| user["id"] }).to include(users(:two).id)
+    end
+  end
+
   describe "POST /api/v1/users/:id/follow" do
     it "creates a follower relationship" do
       expect do

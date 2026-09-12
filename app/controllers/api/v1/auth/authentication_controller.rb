@@ -28,6 +28,22 @@ module Api
           render json: current_user
         end
 
+        def update
+          if current_user.update(user_params)
+            render json: current_user
+          else
+            render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
+          end
+        end
+
+        def destroy
+          if current_user.destroy
+            render json: current_user
+          else
+            render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
+          end
+        end
+
         private
 
         def user_params
