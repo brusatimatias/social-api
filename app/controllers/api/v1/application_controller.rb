@@ -1,6 +1,8 @@
 module Api
   module V1
     class ApplicationController < ::ApplicationController
+      before_action :authenticate_user!
+
       private
 
       def authenticate_user!

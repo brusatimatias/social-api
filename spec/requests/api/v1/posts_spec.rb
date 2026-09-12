@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Api::V1::Posts", type: :request do
   describe "GET /api/v1/posts" do
     it "lists posts" do
-      get api_v1_posts_path
+      get api_v1_posts_path, headers: auth_headers
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.map { |post| post["content"] }).to include(posts(:one).content)
@@ -12,7 +12,7 @@ RSpec.describe "Api::V1::Posts", type: :request do
     end
 
     it "filters posts by status" do
-      get api_v1_posts_path, params: { status: "draft" }
+      get api_v1_posts_path, params: { status: "draft" }, headers: auth_headers
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.map { |post| post["id"] }).to eq([posts(:two).id])
@@ -48,7 +48,7 @@ RSpec.describe "Api::V1::Posts", type: :request do
 
   describe "resource actions" do
     it "shows a post" do
-      get api_v1_post_path(posts(:one).id)
+      get api_v1_post_path(posts(:one).id), headers: auth_headers
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["content"]).to eq(posts(:one).content)

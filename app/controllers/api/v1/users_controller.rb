@@ -1,7 +1,6 @@
 module Api
   module V1
     class UsersController < ApplicationController
-      before_action :authenticate_user!, only: %i[index update destroy follow unfollow]
       before_action :set_user, only: %i[show update destroy]
       before_action :set_user_for_relationships, only: %i[followers following follow unfollow]
       before_action :authorize_user!, only: %i[update destroy]

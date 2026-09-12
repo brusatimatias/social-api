@@ -2,7 +2,6 @@ module Api
   module V1
     class CommentsController < ApplicationController
       before_action :set_post
-      before_action :authenticate_user!, only: %i[create update destroy]
       before_action :set_comment, only: %i[update destroy]
       before_action :authorize_comment!, only: %i[update destroy]
 

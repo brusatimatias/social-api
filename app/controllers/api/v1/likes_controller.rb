@@ -2,7 +2,6 @@ module Api
   module V1
     class LikesController < ApplicationController
       before_action :set_post
-      before_action :authenticate_user!, only: %i[create destroy]
       before_action :set_like, only: :destroy
       before_action :authorize_like!, only: :destroy
 

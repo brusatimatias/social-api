@@ -18,7 +18,7 @@ RSpec.describe "Api::V1::Users", type: :request do
 
   describe "resource actions" do
     it "shows a user by uuid" do
-      get api_v1_user_path(users(:one).uuid)
+      get api_v1_user_path(users(:one).uuid), headers: auth_headers
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["email"]).to eq(users(:one).email)
