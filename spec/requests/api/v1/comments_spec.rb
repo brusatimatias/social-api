@@ -10,9 +10,9 @@ RSpec.describe "Api::V1::Comments", type: :request do
       end.to change(Comment, :count).by(1)
 
       expect(response).to have_http_status(:created)
-      expect(response.parsed_body["content"]).to eq("A new comment")
-      expect(response.parsed_body["user_id"]).to eq(users(:one).id)
-      expect(response.parsed_body["post_id"]).to eq(posts(:one).id)
+      expect(response.parsed_body["data"]["content"]).to eq("A new comment")
+      expect(response.parsed_body["data"]["user_id"]).to eq(users(:one).id)
+      expect(response.parsed_body["data"]["post_id"]).to eq(posts(:one).id)
     end
 
     it "rejects a comment without content" do
@@ -34,7 +34,7 @@ RSpec.describe "Api::V1::Comments", type: :request do
       }, headers: auth_headers, as: :json
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["content"]).to eq("An updated comment")
+      expect(response.parsed_body["data"]["content"]).to eq("An updated comment")
     end
 
     it "deletes a comment" do
@@ -43,7 +43,7 @@ RSpec.describe "Api::V1::Comments", type: :request do
       end.to change(Comment, :count).by(-1)
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["id"]).to eq(comments(:one).id)
+      expect(response.parsed_body["data"]["id"]).to eq(comments(:one).id)
     end
   end
 end

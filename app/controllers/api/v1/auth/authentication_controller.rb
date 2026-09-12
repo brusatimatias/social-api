@@ -8,9 +8,11 @@ module Api
           user = User.new(user_params)
 
           if user.save
-            render json: { user: user, token: issue_token(user) }, status: :created
+            render json: Api::V1::Response.success(
+              data: { user: user, token: issue_token(user) }
+            ), status: :created
           else
-            render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+            render json: Api::V1::Response.error(user.errors.full_messages), status: :unprocessable_entity
           end
         end
 
@@ -18,29 +20,35 @@ module Api
           user = User.find_by(email: login_params[:email].to_s.strip.downcase)
 
           if user&.authenticate(login_params[:password])
-            render json: { user: user, token: issue_token(user) }
+            render json: Api::V1::Response.success(
+              data: { user: user, token: issue_token(user) }
+            )
           else
-            render json: { error: "Invalid email or password" }, status: :unauthorized
+            render json: Api::V1::Response.error("Invalid email or password"), status: :unauthorized
           end
         end
 
         def me
-          render json: current_user
+          render json: Api::V1::Response.success(data: current_user)
         end
 
         def update
           if current_user.update(user_params)
-            render json: current_user
+            render json: Api::V1::Response.success(data: current_user)
           else
-            render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
+            render json: Api::V1::Response.error(
+              current_user.errors.full_messages
+            ), status: :unprocessable_entity
           end
         end
 
         def destroy
           if current_user.destroy
-            render json: current_user
+            render json: Api::V1::Response.success(data: current_user)
           else
-            render json: { errors: current_user.errors.full_messages }, status: :unprocessable_entity
+            render json: Api::V1::Response.error(
+              current_user.errors.full_messages
+            ), status: :unprocessable_entity
           end
         end
 

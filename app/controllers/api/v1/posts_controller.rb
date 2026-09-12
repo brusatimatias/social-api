@@ -6,36 +6,40 @@ module Api
       def index
         posts = current_user.posts
         posts = posts.where(status: params[:status]) if params[:status].present?
-        render json: posts, include: { comments: { include: :user }, likes: { include: :user } }
+        render json: Api::V1::Response.success(
+          data: posts.as_json(include: { comments: { include: :user }, likes: { include: :user } })
+        )
       end
 
       def show
-        render json: @post, include: { comments: { include: :user }, likes: { include: :user } }
+        render json: Api::V1::Response.success(
+          data: @post.as_json(include: { comments: { include: :user }, likes: { include: :user } })
+        )
       end
 
       def create
         post = current_user.posts.build(post_params)
 
         if post.save
-          render json: post, status: :created
+          render json: Api::V1::Response.success(data: post), status: :created
         else
-          render json: { errors: post.errors.full_messages }, status: :unprocessable_entity
+          render json: Api::V1::Response.error(post.errors.full_messages), status: :unprocessable_entity
         end
       end
 
       def update
         if @post.update(post_params)
-          render json: @post
+          render json: Api::V1::Response.success(data: @post)
         else
-          render json: { errors: @post.errors.full_messages }, status: :unprocessable_entity
+          render json: Api::V1::Response.error(@post.errors.full_messages), status: :unprocessable_entity
         end
       end
 
       def destroy
         if @post.destroy
-          render json: @post
+          render json: Api::V1::Response.success(data: @post)
         else
-          render json: { errors: @post.errors.full_messages }, status: :unprocessable_entity
+          render json: Api::V1::Response.error(@post.errors.full_messages), status: :unprocessable_entity
         end
       end
 

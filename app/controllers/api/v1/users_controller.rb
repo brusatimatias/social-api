@@ -5,20 +5,22 @@ module Api
       before_action :set_relationship_user, only: %i[followers following]
 
       def followers
-        render json: @relationship_user.followers
+        render json: Api::V1::Response.success(data: @relationship_user.followers)
       end
 
       def following
-        render json: @relationship_user.following
+        render json: Api::V1::Response.success(data: @relationship_user.following)
       end
 
       def follow
         relationship = current_user.following_relationships.build(following: @user)
 
         if relationship.save
-          render json: relationship, status: :created
+          render json: Api::V1::Response.success(data: relationship), status: :created
         else
-          render json: { errors: relationship.errors.full_messages }, status: :unprocessable_entity
+          render json: Api::V1::Response.error(
+            relationship.errors.full_messages
+          ), status: :unprocessable_entity
         end
       end
 
@@ -26,9 +28,11 @@ module Api
         relationship = current_user.following_relationships.find_by!(following: @user)
 
         if relationship.destroy
-          render json: relationship
+          render json: Api::V1::Response.success(data: relationship)
         else
-          render json: { errors: relationship.errors.full_messages }, status: :unprocessable_entity
+          render json: Api::V1::Response.error(
+            relationship.errors.full_messages
+          ), status: :unprocessable_entity
         end
       end
 

@@ -6,16 +6,16 @@ RSpec.describe "Api::V1::Posts", type: :request do
       get api_v1_posts_path, headers: auth_headers
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.map { |post| post["content"] }).to include(posts(:one).content)
-      expect(response.parsed_body.first).to have_key("comments")
-      expect(response.parsed_body.first).to have_key("likes")
+      expect(response.parsed_body["data"].map { |post| post["content"] }).to include(posts(:one).content)
+      expect(response.parsed_body["data"].first).to have_key("comments")
+      expect(response.parsed_body["data"].first).to have_key("likes")
     end
 
     it "filters posts by status" do
       get api_v1_posts_path, params: { status: "draft" }, headers: auth_headers(users(:two))
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.map { |post| post["id"] }).to eq([posts(:two).id])
+      expect(response.parsed_body["data"].map { |post| post["id"] }).to eq([posts(:two).id])
     end
   end
 
@@ -28,10 +28,10 @@ RSpec.describe "Api::V1::Posts", type: :request do
       end.to change(Post, :count).by(1)
 
       expect(response).to have_http_status(:created)
-      expect(response.parsed_body["content"]).to eq("A new post")
-      expect(response.parsed_body["user_id"]).to eq(users(:one).id)
-      expect(response.parsed_body["visibility"]).to eq("public")
-      expect(response.parsed_body["status"]).to eq("published")
+      expect(response.parsed_body["data"]["content"]).to eq("A new post")
+      expect(response.parsed_body["data"]["user_id"]).to eq(users(:one).id)
+      expect(response.parsed_body["data"]["visibility"]).to eq("public")
+      expect(response.parsed_body["data"]["status"]).to eq("published")
     end
 
     it "rejects a post without content" do
@@ -51,10 +51,17 @@ RSpec.describe "Api::V1::Posts", type: :request do
       get api_v1_post_path(posts(:one).id), headers: auth_headers
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["content"]).to eq(posts(:one).content)
-      expect(response.parsed_body["comments"].map { |comment| comment["content"] })
+      expect(response.parsed_body["data"]["content"]).to eq(posts(:one).content)
+      expect(response.parsed_body["data"]["comments"].map { |comment| comment["content"] })
         .to include(comments(:one).content)
-      expect(response.parsed_body["likes"].map { |like| like["id"] }).to include(likes(:one).id)
+      expect(response.parsed_body["data"]["likes"].map { |like| like["id"] }).to include(likes(:one).id)
+    end
+
+    it "returns a standard error for an unknown post" do
+      get api_v1_post_path(-1), headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+      expect(response.parsed_body["errors"]).to eq(["Resource not found"])
     end
 
     it "updates a post" do
@@ -63,10 +70,10 @@ RSpec.describe "Api::V1::Posts", type: :request do
       }, headers: auth_headers, as: :json
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["content"]).to eq("An updated post")
-      expect(response.parsed_body["visibility"]).to eq("private")
-      expect(response.parsed_body["status"]).to eq("archived")
-      expect(response.parsed_body["edited_at"]).not_to be_nil
+      expect(response.parsed_body["data"]["content"]).to eq("An updated post")
+      expect(response.parsed_body["data"]["visibility"]).to eq("private")
+      expect(response.parsed_body["data"]["status"]).to eq("archived")
+      expect(response.parsed_body["data"]["edited_at"]).not_to be_nil
     end
 
     it "deletes a post" do
@@ -75,7 +82,7 @@ RSpec.describe "Api::V1::Posts", type: :request do
       end.to change(Post, :count).by(-1)
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["id"]).to eq(posts(:one).id)
+      expect(response.parsed_body["data"]["id"]).to eq(posts(:one).id)
     end
   end
 end

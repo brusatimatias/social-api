@@ -16,8 +16,8 @@ RSpec.describe "Api::V1::Authentication", type: :request do
       end.to change(User, :count).by(1)
 
       expect(response).to have_http_status(:created)
-      expect(response.parsed_body["token"]).to be_present
-      expect(response.parsed_body["user"]["email"]).to eq("new.user@example.com")
+      expect(response.parsed_body["data"]["token"]).to be_present
+      expect(response.parsed_body["data"]["user"]["email"]).to eq("new.user@example.com")
     end
 
     it "rejects invalid data" do
@@ -39,7 +39,7 @@ RSpec.describe "Api::V1::Authentication", type: :request do
       }, as: :json
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["token"]).to be_present
+      expect(response.parsed_body["data"]["token"]).to be_present
     end
 
     it "rejects invalid credentials" do
@@ -48,6 +48,7 @@ RSpec.describe "Api::V1::Authentication", type: :request do
       }, as: :json
 
       expect(response).to have_http_status(:unauthorized)
+      expect(response.parsed_body["errors"]).to eq(["Invalid email or password"])
     end
   end
 
@@ -56,12 +57,12 @@ RSpec.describe "Api::V1::Authentication", type: :request do
       post api_v1_auth_login_path, params: {
         auth: { email: users(:one).email, password: "password" }
       }, as: :json
-      token = response.parsed_body["token"]
+      token = response.parsed_body["data"]["token"]
 
       get api_v1_auth_me_path, headers: { "Authorization" => "Bearer #{token}" }
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["email"]).to eq(users(:one).email)
+      expect(response.parsed_body["data"]["email"]).to eq(users(:one).email)
     end
 
     it "updates the authenticated user" do
@@ -69,7 +70,7 @@ RSpec.describe "Api::V1::Authentication", type: :request do
         headers: auth_headers, as: :json
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["name"]).to eq("Augusta")
+      expect(response.parsed_body["data"]["name"]).to eq("Augusta")
     end
 
     it "deletes the authenticated user" do
@@ -78,13 +79,14 @@ RSpec.describe "Api::V1::Authentication", type: :request do
       end.to change(User, :count).by(-1)
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["id"]).to eq(users(:one).id)
+      expect(response.parsed_body["data"]["id"]).to eq(users(:one).id)
     end
 
     it "rejects requests without a valid token" do
       get api_v1_auth_me_path
 
       expect(response).to have_http_status(:unauthorized)
+      expect(response.parsed_body["errors"]).to eq(["Unauthorized"])
     end
 
     it "rejects an expired token" do

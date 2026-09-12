@@ -8,17 +8,17 @@ module Api
         like = current_user.likes.build(post: @post)
 
         if like.save
-          render json: like, status: :created
+          render json: Api::V1::Response.success(data: like), status: :created
         else
-          render json: { errors: like.errors.full_messages }, status: :unprocessable_entity
+          render json: Api::V1::Response.error(like.errors.full_messages), status: :unprocessable_entity
         end
       end
 
       def destroy
         if @like.destroy
-          render json: @like
+          render json: Api::V1::Response.success(data: @like)
         else
-          render json: { errors: @like.errors.full_messages }, status: :unprocessable_entity
+          render json: Api::V1::Response.error(@like.errors.full_messages), status: :unprocessable_entity
         end
       end
 

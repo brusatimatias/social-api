@@ -8,8 +8,8 @@ RSpec.describe "Api::V1::Likes", type: :request do
       end.to change(Like, :count).by(1)
 
       expect(response).to have_http_status(:created)
-      expect(response.parsed_body["user_id"]).to eq(users(:one).id)
-      expect(response.parsed_body["post_id"]).to eq(posts(:one).id)
+      expect(response.parsed_body["data"]["user_id"]).to eq(users(:one).id)
+      expect(response.parsed_body["data"]["post_id"]).to eq(posts(:one).id)
     end
 
     it "rejects a duplicate like" do
@@ -31,7 +31,7 @@ RSpec.describe "Api::V1::Likes", type: :request do
       end.to change(Like, :count).by(-1)
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["id"]).to eq(likes(:one).id)
+      expect(response.parsed_body["data"]["id"]).to eq(likes(:one).id)
     end
   end
 end
