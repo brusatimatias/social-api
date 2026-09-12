@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   has_many :posts, dependent: :destroy
+  has_many :comments, dependent: :destroy
   has_secure_password
 
   before_validation :assign_uuid, on: :create
