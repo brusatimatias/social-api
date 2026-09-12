@@ -1,7 +1,9 @@
 module Api
   module V1
     class PostsController < ApplicationController
+      before_action :authenticate_user!, only: %i[create update destroy]
       before_action :set_post, only: %i[show update destroy]
+      before_action :authorize_post!, only: %i[update destroy]
 
       def index
         render json: Post.all
@@ -12,7 +14,7 @@ module Api
       end
 
       def create
-        post = Post.new(post_params)
+        post = current_user.posts.build(post_params)
 
         if post.save
           render json: post, status: :created
@@ -41,7 +43,13 @@ module Api
       end
 
       def post_params
-        params.require(:post).permit(:content, :user_id, :visibility, :status, media: [])
+        params.require(:post).permit(:content, :visibility, :status, media: [])
+      end
+
+      def authorize_post!
+        return if @post.user == current_user
+
+        render json: { error: "Forbidden" }, status: :forbidden
       end
     end
   end

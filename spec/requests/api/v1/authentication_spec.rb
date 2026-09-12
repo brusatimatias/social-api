@@ -8,7 +8,7 @@ RSpec.describe "Api::V1::Authentication", type: :request do
           user: {
             name: "Katherine",
             lastname: "Johnson",
-            email: "katherine@example.com",
+            email: "new.user@example.com",
             password: "password",
             password_confirmation: "password"
           }
@@ -17,7 +17,7 @@ RSpec.describe "Api::V1::Authentication", type: :request do
 
       expect(response).to have_http_status(:created)
       expect(response.parsed_body["token"]).to be_present
-      expect(response.parsed_body["user"]["email"]).to eq("katherine@example.com")
+      expect(response.parsed_body["user"]["email"]).to eq("new.user@example.com")
     end
 
     it "rejects invalid data" do

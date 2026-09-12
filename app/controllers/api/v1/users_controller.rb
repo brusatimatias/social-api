@@ -1,7 +1,10 @@
 module Api
   module V1
     class UsersController < ApplicationController
+      before_action :authenticate_user!, only: %i[update destroy follow unfollow]
       before_action :set_user, only: %i[show update destroy]
+      before_action :set_user_for_relationships, only: %i[followers following follow unfollow]
+      before_action :authorize_user!, only: %i[update destroy]
 
       def index
         render json: User.all
@@ -11,14 +14,28 @@ module Api
         render json: @user
       end
 
-      def create
-        user = User.new(user_params)
+      def followers
+        render json: @user.followers
+      end
 
-        if user.save
-          render json: user, status: :created
+      def following
+        render json: @user.following
+      end
+
+      def follow
+        relationship = current_user.following_relationships.build(following: @user)
+
+        if relationship.save
+          render json: relationship, status: :created
         else
-          render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: relationship.errors.full_messages }, status: :unprocessable_entity
         end
+      end
+
+      def unfollow
+        relationship = current_user.following_relationships.find_by!(following: @user)
+        relationship.destroy
+        render json: relationship
       end
 
       def update
@@ -38,6 +55,16 @@ module Api
 
       def set_user
         @user = User.find_by!(uuid: params[:id])
+      end
+
+      def set_user_for_relationships
+        @user = User.find_by!(uuid: params[:id])
+      end
+
+      def authorize_user!
+        return if @user == current_user
+
+        render json: { error: "Forbidden" }, status: :forbidden
       end
 
       def user_params

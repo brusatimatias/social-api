@@ -10,35 +10,6 @@ RSpec.describe "Api::V1::Users", type: :request do
     end
   end
 
-  describe "POST /api/v1/users" do
-    it "creates a user" do
-      expect do
-        post api_v1_users_path, params: {
-          user: {
-            name: "Katherine",
-            lastname: "Johnson",
-            email: "katherine@example.com",
-            password: "password",
-            password_confirmation: "password"
-          }
-        }, as: :json
-      end.to change(User, :count).by(1)
-
-      expect(response).to have_http_status(:created)
-      expect(response.parsed_body["email"]).to eq("katherine@example.com")
-      expect(response.parsed_body).not_to have_key("password_digest")
-    end
-
-    it "rejects an invalid user" do
-      expect do
-        post api_v1_users_path, params: { user: { email: "invalid" } }, as: :json
-      end.not_to change(User, :count)
-
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.parsed_body["errors"]).not_to be_empty
-    end
-  end
-
   describe "resource actions" do
     it "shows a user by uuid" do
       get api_v1_user_path(users(:one).uuid)
@@ -48,7 +19,8 @@ RSpec.describe "Api::V1::Users", type: :request do
     end
 
     it "updates a user" do
-      patch api_v1_user_path(users(:one).uuid), params: { user: { name: "Augusta" } }, as: :json
+      patch api_v1_user_path(users(:one).uuid), params: { user: { name: "Augusta" } },
+        headers: auth_headers, as: :json
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["name"]).to eq("Augusta")
@@ -56,7 +28,7 @@ RSpec.describe "Api::V1::Users", type: :request do
 
     it "deletes a user" do
       expect do
-        delete api_v1_user_path(users(:one).uuid)
+        delete api_v1_user_path(users(:one).uuid), headers: auth_headers
       end.to change(User, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)

@@ -1,18 +1,17 @@
 module Api
   module V1
     class LikesController < ApplicationController
-      before_action :set_like, only: %i[show destroy]
+      before_action :set_post
+      before_action :authenticate_user!, only: %i[create destroy]
+      before_action :set_like, only: :destroy
+      before_action :authorize_like!, only: :destroy
 
       def index
-        render json: Like.all
-      end
-
-      def show
-        render json: @like
+        render json: @post.likes.includes(:user)
       end
 
       def create
-        like = Like.new(like_params)
+        like = current_user.likes.build(post: @post)
 
         if like.save
           render json: like, status: :created
@@ -29,11 +28,17 @@ module Api
       private
 
       def set_like
-        @like = Like.find(params[:id])
+        @like = @post.likes.find(params[:id])
       end
 
-      def like_params
-        params.require(:like).permit(:user_id, :post_id)
+      def set_post
+        @post = Post.find(params[:post_id])
+      end
+
+      def authorize_like!
+        return if @like.user == current_user
+
+        render json: { error: "Forbidden" }, status: :forbidden
       end
     end
   end

@@ -14,8 +14,8 @@ RSpec.describe "Api::V1::Posts", type: :request do
     it "creates a post" do
       expect do
         post api_v1_posts_path, params: {
-          post: { content: "A new post", user_id: users(:one).id }
-        }, as: :json
+          post: { content: "A new post" }
+        }, headers: auth_headers, as: :json
       end.to change(Post, :count).by(1)
 
       expect(response).to have_http_status(:created)
@@ -28,8 +28,8 @@ RSpec.describe "Api::V1::Posts", type: :request do
     it "rejects a post without content" do
       expect do
         post api_v1_posts_path, params: {
-          post: { user_id: users(:one).id }
-        }, as: :json
+          post: { content: nil }
+        }, headers: auth_headers, as: :json
       end.not_to change(Post, :count)
 
       expect(response).to have_http_status(:unprocessable_entity)
@@ -48,7 +48,7 @@ RSpec.describe "Api::V1::Posts", type: :request do
     it "updates a post" do
       patch api_v1_post_path(posts(:one).id), params: {
         post: { content: "An updated post", visibility: "private", status: "archived" }
-      }, as: :json
+      }, headers: auth_headers, as: :json
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["content"]).to eq("An updated post")
@@ -59,7 +59,7 @@ RSpec.describe "Api::V1::Posts", type: :request do
 
     it "deletes a post" do
       expect do
-        delete api_v1_post_path(posts(:one).id)
+        delete api_v1_post_path(posts(:one).id), headers: auth_headers
       end.to change(Post, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
