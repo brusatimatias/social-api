@@ -66,6 +66,8 @@ GEM
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
+    awesome_print (1.9.2)
+    bcrypt (3.1.22)
     bootsnap (1.16.0)
       msgpack (~> 1.2)
     builder (3.2.4)
@@ -75,6 +77,7 @@ GEM
     debug (1.8.0)
       irb (>= 1.5.0)
       reline (>= 0.3.1)
+    diff-lcs (1.6.2)
     erubi (1.12.0)
     globalid (1.2.1)
       activesupport (>= 6.1)
@@ -109,6 +112,10 @@ GEM
     nio4r (2.5.9)
     nokogiri (1.15.4-arm64-darwin)
       racc (~> 1.4)
+    nokogiri (1.15.4-x86_64-linux)
+      racc (~> 1.4)
+    pg (1.6.3-arm64-darwin)
+    pg (1.6.3-x86_64-linux)
     psych (5.1.0)
       stringio
     puma (5.6.7)
@@ -150,7 +157,23 @@ GEM
       psych (>= 4.0.0)
     reline (0.3.8)
       io-console (~> 0.5)
-    sqlite3 (1.6.4-arm64-darwin)
+    rspec-core (3.13.6)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.8)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-rails (6.1.5)
+      actionpack (>= 6.1)
+      activesupport (>= 6.1)
+      railties (>= 6.1)
+      rspec-core (~> 3.13)
+      rspec-expectations (~> 3.13)
+      rspec-mocks (~> 3.13)
+      rspec-support (~> 3.13)
+    rspec-support (3.13.7)
     stringio (3.0.8)
     thor (1.2.2)
     timeout (0.4.0)
@@ -163,13 +186,17 @@ GEM
 
 PLATFORMS
   arm64-darwin-22
+  x86_64-linux
 
 DEPENDENCIES
+  awesome_print
+  bcrypt (~> 3.1.7)
   bootsnap
   debug
+  pg (~> 1.5, >= 1.5.4)
   puma (~> 5.0)
   rails (~> 7.0.4, >= 7.0.4.3)
-  sqlite3 (~> 1.4)
+  rspec-rails (~> 6.0)
   tzinfo-data
 
 RUBY VERSION
