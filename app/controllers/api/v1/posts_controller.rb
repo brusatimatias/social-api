@@ -2,10 +2,10 @@ module Api
   module V1
     class PostsController < ApplicationController
       before_action :set_post, only: %i[show update destroy]
-      before_action :authorize_post!, only: %i[update destroy]
 
       def index
-        posts = params[:status].present? ? Post.where(status: params[:status]) : Post.all
+        posts = current_user.posts
+        posts = posts.where(status: params[:status]) if params[:status].present?
         render json: posts, include: { comments: { include: :user }, likes: { include: :user } }
       end
 
@@ -42,17 +42,11 @@ module Api
       private
 
       def set_post
-        @post = Post.find(params[:id])
+        @post = current_user.posts.find(params[:id])
       end
 
       def post_params
         params.require(:post).permit(:content, :visibility, :status, media: [])
-      end
-
-      def authorize_post!
-        return if @post.user == current_user
-
-        render json: { error: "Forbidden" }, status: :forbidden
       end
     end
   end

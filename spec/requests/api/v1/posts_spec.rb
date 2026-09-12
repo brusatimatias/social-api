@@ -12,7 +12,7 @@ RSpec.describe "Api::V1::Posts", type: :request do
     end
 
     it "filters posts by status" do
-      get api_v1_posts_path, params: { status: "draft" }, headers: auth_headers
+      get api_v1_posts_path, params: { status: "draft" }, headers: auth_headers(users(:two))
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.map { |post| post["id"] }).to eq([posts(:two).id])
