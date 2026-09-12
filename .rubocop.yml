@@ -3,6 +3,9 @@ AllCops:
   DisabledByDefault: true
   Exclude:
     - "db/schema.rb"
+    - "vendor/**/*"
+    - "tmp/**/*"
+    - "log/**/*"
 
 Layout/LineLength:
   Enabled: true
