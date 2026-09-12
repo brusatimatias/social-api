@@ -31,7 +31,7 @@ RSpec.describe "Api::V1::Comments", type: :request do
     it "updates a comment" do
       patch api_v1_post_comment_path(posts(:one).id, comments(:one).id), params: {
         comment: { content: "An updated comment" }
-      }, headers: auth_headers(users(:two)), as: :json
+      }, headers: auth_headers, as: :json
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["content"]).to eq("An updated comment")
@@ -39,7 +39,7 @@ RSpec.describe "Api::V1::Comments", type: :request do
 
     it "deletes a comment" do
       expect do
-        delete api_v1_post_comment_path(posts(:one).id, comments(:one).id), headers: auth_headers(users(:two))
+        delete api_v1_post_comment_path(posts(:one).id, comments(:one).id), headers: auth_headers
       end.to change(Comment, :count).by(-1)
 
       expect(response).to have_http_status(:ok)

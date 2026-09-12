@@ -3,7 +3,6 @@ module Api
     class CommentsController < ApplicationController
       before_action :set_post
       before_action :set_comment, only: %i[update destroy]
-      before_action :authorize_comment!, only: %i[update destroy]
 
       def create
         comment = current_user.comments.build(comment_params.merge(post: @post))
@@ -38,13 +37,7 @@ module Api
       end
 
       def set_post
-        @post = Post.find(params[:post_id])
-      end
-
-      def authorize_comment!
-        return if @comment.user == current_user
-
-        render json: { error: "Forbidden" }, status: :forbidden
+        @post = current_user.posts.find(params[:post_id])
       end
 
       def comment_params
