@@ -1,6 +1,38 @@
 require "rails_helper"
 
 RSpec.describe "Api::V1::Followers", type: :request do
+  describe "GET /api/v1/users/followers" do
+    it "lists the authenticated user's followers" do
+      get followers_api_v1_users_path, headers: auth_headers(users(:one))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["data"].map { |user| user["id"] }).to include(users(:two).id)
+    end
+
+    it "lists another user's followers by user_id" do
+      get followers_api_v1_users_path, params: { user_id: users(:one).uuid }, headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["data"].map { |user| user["id"] }).to include(users(:two).id)
+    end
+  end
+
+  describe "GET /api/v1/users/following" do
+    it "lists the authenticated user's following" do
+      get following_api_v1_users_path, headers: auth_headers(users(:one))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["data"].map { |user| user["id"] }).to include(users(:two).id)
+    end
+
+    it "lists another user's following by user_id" do
+      get following_api_v1_users_path, params: { user_id: users(:one).uuid }, headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["data"].map { |user| user["id"] }).to include(users(:two).id)
+    end
+  end
+
   describe "POST /api/v1/users/:id/follow" do
     it "creates a follower relationship" do
       expect do
@@ -8,8 +40,8 @@ RSpec.describe "Api::V1::Followers", type: :request do
       end.to change(Follower, :count).by(1)
 
       expect(response).to have_http_status(:created)
-      expect(response.parsed_body["follower_id"]).to eq(users(:three).id)
-      expect(response.parsed_body["following_id"]).to eq(users(:one).id)
+      expect(response.parsed_body["data"]["follower_id"]).to eq(users(:three).id)
+      expect(response.parsed_body["data"]["following_id"]).to eq(users(:one).id)
     end
 
     it "rejects self-following" do

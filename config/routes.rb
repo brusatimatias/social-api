@@ -5,11 +5,13 @@ Rails.application.routes.draw do
         post :register, to: "authentication#register"
         post :login, to: "authentication#login"
         get :me, to: "authentication#me"
+        patch :me, to: "authentication#update"
+        delete :me, to: "authentication#destroy"
       end
 
-      resources :users, only: %i[index show update destroy] do
-        get :followers, on: :member
-        get :following, on: :member
+      resources :users, only: [] do
+        get :followers, on: :collection
+        get :following, on: :collection
         post :follow, on: :member
         delete :follow, on: :member, action: :unfollow
       end

@@ -1,12 +1,24 @@
 module Api
   module V1
     class ApplicationController < ::ApplicationController
+      before_action :authenticate_user!
+      rescue_from ActionController::ParameterMissing, with: :render_parameter_error
+      rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
+
       private
 
       def authenticate_user!
         return if current_user
 
-        render json: { error: "Unauthorized" }, status: :unauthorized
+        render json: Api::V1::Response.error("Unauthorized"), status: :unauthorized
+      end
+
+      def render_parameter_error(error)
+        render json: Api::V1::Response.error(error.message), status: :bad_request
+      end
+
+      def render_not_found
+        render json: Api::V1::Response.error("Resource not found"), status: :not_found
       end
 
       def current_user

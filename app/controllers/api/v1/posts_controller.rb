@@ -1,59 +1,56 @@
 module Api
   module V1
     class PostsController < ApplicationController
-      before_action :authenticate_user!, only: %i[create update destroy]
       before_action :set_post, only: %i[show update destroy]
-      before_action :authorize_post!, only: %i[update destroy]
 
       def index
-        posts = params[:status].present? ? Post.where(status: params[:status]) : Post.all
-        render json: posts, include: { comments: { include: :user }, likes: { include: :user } }
+        posts = current_user.posts
+        posts = posts.where(status: params[:status]) if params[:status].present?
+        render json: Api::V1::Response.success(
+          data: posts.as_json(include: { comments: { include: :user }, likes: { include: :user } })
+        )
       end
 
       def show
-        render json: @post, include: { comments: { include: :user }, likes: { include: :user } }
+        render json: Api::V1::Response.success(
+          data: @post.as_json(include: { comments: { include: :user }, likes: { include: :user } })
+        )
       end
 
       def create
         post = current_user.posts.build(post_params)
 
         if post.save
-          render json: post, status: :created
+          render json: Api::V1::Response.success(data: post), status: :created
         else
-          render json: { errors: post.errors.full_messages }, status: :unprocessable_entity
+          render json: Api::V1::Response.error(post.errors.full_messages), status: :unprocessable_entity
         end
       end
 
       def update
         if @post.update(post_params)
-          render json: @post
+          render json: Api::V1::Response.success(data: @post)
         else
-          render json: { errors: @post.errors.full_messages }, status: :unprocessable_entity
+          render json: Api::V1::Response.error(@post.errors.full_messages), status: :unprocessable_entity
         end
       end
 
       def destroy
         if @post.destroy
-          render json: @post
+          render json: Api::V1::Response.success(data: @post)
         else
-          render json: { errors: @post.errors.full_messages }, status: :unprocessable_entity
+          render json: Api::V1::Response.error(@post.errors.full_messages), status: :unprocessable_entity
         end
       end
 
       private
 
       def set_post
-        @post = Post.find(params[:id])
+        @post = current_user.posts.find(params[:id])
       end
 
       def post_params
         params.require(:post).permit(:content, :visibility, :status, media: [])
-      end
-
-      def authorize_post!
-        return if @post.user == current_user
-
-        render json: { error: "Forbidden" }, status: :forbidden
       end
     end
   end
