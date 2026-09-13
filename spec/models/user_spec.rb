@@ -38,6 +38,24 @@ RSpec.describe User, type: :model do
       expect(user).not_to be_valid
       expect(user.errors[:email]).to include("has already been taken")
     end
+
+    it "requires a name and a lastname" do
+      user = described_class.new(email: "new.user@example.com", password: "password")
+
+      expect(user).not_to be_valid
+      expect(user.errors[:name]).to include("can't be blank")
+      expect(user.errors[:lastname]).to include("can't be blank")
+    end
+
+    it "requires a unique uuid" do
+      user = described_class.new(
+        name: "Another", lastname: "Ada", email: "another.ada@example.com", password: "password",
+        uuid: users(:one).uuid
+      )
+
+      expect(user).not_to be_valid
+      expect(user.errors[:uuid]).to include("has already been taken")
+    end
   end
 
   it "authenticates with the password" do

@@ -59,6 +59,17 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response.parsed_body["errors"]).not_to be_empty
     end
 
+    it "rejects an invalid visibility instead of raising" do
+      expect do
+        post api_v1_posts_path, params: {
+          post: { content: "A new post", visibility: "invalid" }
+        }, headers: auth_headers, as: :json
+      end.not_to change(Post, :count)
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body["errors"]).to eq(["'invalid' is not a valid visibility"])
+    end
+
     it "creates a post with a media attachment and returns its URL" do
       expect do
         post api_v1_posts_path, params: {
@@ -126,29 +137,19 @@ RSpec.describe "Api::V1::Posts", type: :request do
     end
 
     it "shows a published followers-only post to a follower" do
-      post = Post.create!(
-        user: users(:two), content: "Followers only", visibility: :followers, status: :published
-      )
-
-      get api_v1_post_path(post.id), headers: auth_headers(users(:one))
+      get api_v1_post_path(posts(:two_followers).id), headers: auth_headers(users(:one))
 
       expect(response).to have_http_status(:ok)
     end
 
     it "hides a published followers-only post from a non-follower" do
-      post = Post.create!(
-        user: users(:two), content: "Followers only", visibility: :followers, status: :published
-      )
-
-      get api_v1_post_path(post.id), headers: auth_headers(users(:three))
+      get api_v1_post_path(posts(:two_followers).id), headers: auth_headers(users(:three))
 
       expect(response).to have_http_status(:not_found)
     end
 
     it "hides a published private post from anyone but the owner" do
-      post = Post.create!(user: users(:two), content: "Private", visibility: :private, status: :published)
-
-      get api_v1_post_path(post.id), headers: auth_headers(users(:one))
+      get api_v1_post_path(posts(:two_private).id), headers: auth_headers(users(:one))
 
       expect(response).to have_http_status(:not_found)
     end
@@ -163,6 +164,15 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response.parsed_body["data"]["visibility"]).to eq("private")
       expect(response.parsed_body["data"]["status"]).to eq("archived")
       expect(response.parsed_body["data"]["edited_at"]).not_to be_nil
+    end
+
+    it "rejects an invalid status instead of raising" do
+      patch api_v1_post_path(posts(:one).id), params: {
+        post: { status: "invalid" }
+      }, headers: auth_headers, as: :json
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body["errors"]).to eq(["'invalid' is not a valid status"])
     end
 
     it "rejects updating a post that belongs to someone else" do

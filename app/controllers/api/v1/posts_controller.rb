@@ -5,6 +5,8 @@ module Api
       before_action :set_own_post, only: %i[update destroy]
       before_action :validate_status_filter, only: :index
 
+      rescue_from ArgumentError, with: :render_invalid_enum_value
+
       def index
         render json: Api::V1::Response.success(
           data: current_user.posts.with_counts.for_status(params[:status]).with_attached_media,
@@ -70,6 +72,10 @@ module Api
         render json: Api::V1::Response.error(
           "Invalid status. Allowed values: #{Post.statuses.keys.join(", ")}"
         ), status: :bad_request
+      end
+
+      def render_invalid_enum_value(error)
+        render json: Api::V1::Response.error(error.message), status: :bad_request
       end
     end
   end

@@ -15,6 +15,13 @@ RSpec.describe "Api::V1::Followers", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"].map { |user| user["id"] }).to include(users(:two).id)
     end
+
+    it "returns a standard error for a nonexistent user_id" do
+      get followers_api_v1_users_path, params: { user_id: "nonexistent" }, headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+      expect(response.parsed_body["errors"]).to eq(["Resource not found"])
+    end
   end
 
   describe "GET /api/v1/users/following" do
@@ -52,6 +59,22 @@ RSpec.describe "Api::V1::Followers", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.parsed_body["errors"]).not_to be_empty
     end
+
+    it "rejects following a user that is already followed" do
+      expect do
+        post follow_api_v1_user_path(users(:two).uuid), headers: auth_headers(users(:one)), as: :json
+      end.not_to change(Follower, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body["errors"]).not_to be_empty
+    end
+
+    it "returns a standard error for a nonexistent user" do
+      post follow_api_v1_user_path("nonexistent"), headers: auth_headers, as: :json
+
+      expect(response).to have_http_status(:not_found)
+      expect(response.parsed_body["errors"]).to eq(["Resource not found"])
+    end
   end
 
   describe "DELETE /api/v1/users/:id/follow" do
@@ -61,6 +84,13 @@ RSpec.describe "Api::V1::Followers", type: :request do
       end.to change(Follower, :count).by(-1)
 
       expect(response).to have_http_status(:ok)
+    end
+
+    it "returns a standard error when not following that user" do
+      delete follow_api_v1_user_path(users(:one).uuid), headers: auth_headers(users(:three))
+
+      expect(response).to have_http_status(:not_found)
+      expect(response.parsed_body["errors"]).to eq(["Resource not found"])
     end
   end
 end
