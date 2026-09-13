@@ -84,6 +84,47 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response.parsed_body["errors"]).to eq(["Resource not found"])
     end
 
+    it "shows another user's public post" do
+      get api_v1_post_path(posts(:one).id), headers: auth_headers(users(:three))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["data"]["content"]).to eq(posts(:one).content)
+    end
+
+    it "hides a draft post from a non-owner even when they follow the author" do
+      get api_v1_post_path(posts(:two).id), headers: auth_headers(users(:one))
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "shows a published followers-only post to a follower" do
+      post = Post.create!(
+        user: users(:two), content: "Followers only", visibility: :followers, status: :published
+      )
+
+      get api_v1_post_path(post.id), headers: auth_headers(users(:one))
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "hides a published followers-only post from a non-follower" do
+      post = Post.create!(
+        user: users(:two), content: "Followers only", visibility: :followers, status: :published
+      )
+
+      get api_v1_post_path(post.id), headers: auth_headers(users(:three))
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "hides a published private post from anyone but the owner" do
+      post = Post.create!(user: users(:two), content: "Private", visibility: :private, status: :published)
+
+      get api_v1_post_path(post.id), headers: auth_headers(users(:one))
+
+      expect(response).to have_http_status(:not_found)
+    end
+
     it "updates a post" do
       patch api_v1_post_path(posts(:one).id), params: {
         post: { content: "An updated post", visibility: "private", status: "archived" }
@@ -94,6 +135,22 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response.parsed_body["data"]["visibility"]).to eq("private")
       expect(response.parsed_body["data"]["status"]).to eq("archived")
       expect(response.parsed_body["data"]["edited_at"]).not_to be_nil
+    end
+
+    it "rejects updating a post that belongs to someone else" do
+      patch api_v1_post_path(posts(:one).id), params: {
+        post: { content: "Hijacked" }
+      }, headers: auth_headers(users(:two)), as: :json
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "rejects deleting a post that belongs to someone else" do
+      expect do
+        delete api_v1_post_path(posts(:one).id), headers: auth_headers(users(:two))
+      end.not_to change(Post, :count)
+
+      expect(response).to have_http_status(:not_found)
     end
 
     it "deletes a post" do

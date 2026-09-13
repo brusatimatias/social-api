@@ -17,6 +17,15 @@ class Post < ApplicationRecord
       .group("posts.id")
   }
   scope :for_status, ->(status) { status.present? ? where(status:) : all }
+  scope :visible_to, lambda { |user|
+    where(user_id: user.id)
+      .or(where(status: statuses[:published], visibility: visibilities[:public]))
+      .or(where(
+        status: statuses[:published],
+        visibility: visibilities[:followers],
+        user_id: user.following.select(:id)
+      ))
+  }
 
   validates :content, presence: true
 

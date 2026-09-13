@@ -1,7 +1,8 @@
 module Api
   module V1
     class PostsController < ApplicationController
-      before_action :set_post, only: %i[show update destroy]
+      before_action :set_visible_post, only: :show
+      before_action :set_own_post, only: %i[update destroy]
       before_action :validate_status_filter, only: :index
 
       def index
@@ -45,7 +46,11 @@ module Api
 
       private
 
-      def set_post
+      def set_visible_post
+        @post = Post.visible_to(current_user).includes(comments: :user, likes: :user).find(params[:id])
+      end
+
+      def set_own_post
         @post = current_user.posts.includes(comments: :user, likes: :user).find(params[:id])
       end
 
