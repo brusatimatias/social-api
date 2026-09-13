@@ -101,13 +101,58 @@ RSpec.describe "Api::V1::Authentication", type: :request do
       expect(response.parsed_body["data"]["name"]).to eq("Augusta")
     end
 
-    it "deletes the authenticated user" do
+    it "deactivates the authenticated user instead of destroying it" do
       expect do
         delete api_v1_auth_me_path, headers: auth_headers
-      end.to change(User, :count).by(-1)
+      end.to change(User, :count).by(-1) # hidden from normal queries, not actually destroyed
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"]["id"]).to eq(users(:one).id)
+      expect(users(:one).reload.deleted_at).to be_present
+      expect(User.with_deleted.exists?(users(:one).id)).to be true
+    end
+
+    it "also soft-deletes the deactivated user's own posts" do
+      delete api_v1_auth_me_path, headers: auth_headers
+
+      expect(posts(:one).reload.deleted_at).to be_present
+    end
+
+    it "rejects logging in as a deactivated user" do
+      delete api_v1_auth_me_path, headers: auth_headers
+
+      post api_v1_auth_login_path, params: {
+        auth: { email: users(:one).email, password: "password" }
+      }, as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "rejects further requests with the deactivated user's existing token" do
+      token = auth_headers["Authorization"]
+      delete api_v1_auth_me_path, headers: { "Authorization" => token }
+
+      get api_v1_auth_me_path, headers: { "Authorization" => token }
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "allows a new registration to reuse a deactivated user's email" do
+      delete api_v1_auth_me_path, headers: auth_headers
+
+      expect do
+        post api_v1_auth_register_path, params: {
+          user: {
+            name: "New",
+            lastname: "Owner",
+            email: users(:one).email,
+            password: "password",
+            password_confirmation: "password"
+          }
+        }, as: :json
+      end.to change(User, :count).by(1)
+
+      expect(response).to have_http_status(:created)
     end
 
     it "rejects requests without a valid token" do

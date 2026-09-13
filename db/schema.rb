@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_13_173355) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_13_181038) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -84,6 +84,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_13_173355) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_posts_on_deleted_at"
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
@@ -106,7 +108,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_13_173355) do
     t.string "password_digest", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index "lower((email)::text)", name: "index_users_on_lower_email", unique: true
+    t.datetime "deleted_at"
+    t.index "lower((email)::text)", name: "index_users_on_lower_email", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["uuid"], name: "index_users_on_uuid", unique: true
   end
 

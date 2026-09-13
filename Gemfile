@@ -27,6 +27,9 @@ gem "bcrypt", "~> 3.1.7"
 gem "json", "< 3.0"
 gem "jwt", "~> 2.9"
 
+# Soft delete for User and Post: overrides destroy to set deleted_at instead of removing the row
+gem "paranoia", "~> 3.1"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ mingw mswin x64_mingw jruby ]
 

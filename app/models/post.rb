@@ -4,12 +4,19 @@ class Post < ApplicationRecord
   ALLOWED_MEDIA_TYPES = %w[image/png image/jpeg image/webp image/gif video/mp4 video/quicktime].freeze
 
   belongs_to :user
-  has_many :comments, dependent: :destroy
-  has_many :likes, dependent: :destroy
+  # No `dependent: :destroy` here: paranoia's soft `destroy` still runs Rails' own dependent-destroy
+  # callbacks, which would really delete non-paranoid records. Comments/likes are left in place
+  # (still pointing at the now soft-deleted post) so a post's history survives its own deletion.
+  has_many :comments
+  has_many :likes
   has_many_attached :media
 
   enum :visibility, { public: "public", followers: "followers", private: "private" }, prefix: true
   enum :status, { draft: "draft", published: "published", archived: "archived" }
+
+  # Adds `destroy` (soft, sets deleted_at), `really_destroy!` (hard delete), `restore`/`restore!`,
+  # the default_scope that hides soft-deleted posts everywhere, and `.with_deleted`/`.only_deleted`.
+  acts_as_paranoid
 
   scope :with_counts, lambda {
     left_joins(:comments, :likes)

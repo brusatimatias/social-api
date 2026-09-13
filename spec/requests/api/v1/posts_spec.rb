@@ -181,13 +181,31 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
-    it "deletes a post" do
+    it "soft-deletes a post instead of destroying it" do
       expect do
         delete api_v1_post_path(posts(:one).id), headers: auth_headers
-      end.to change(Post, :count).by(-1)
+      end.to change(Post, :count).by(-1) # hidden from normal queries, not actually destroyed
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"]["id"]).to eq(posts(:one).id)
+      expect(posts(:one).reload.deleted_at).to be_present
+      expect(Post.with_deleted.exists?(posts(:one).id)).to be true
+    end
+
+    it "hides a soft-deleted post from its owner afterwards" do
+      delete api_v1_post_path(posts(:one).id), headers: auth_headers
+
+      get api_v1_post_path(posts(:one).id), headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "excludes a soft-deleted post from the index" do
+      delete api_v1_post_path(posts(:one).id), headers: auth_headers
+
+      get api_v1_posts_path, headers: auth_headers
+
+      expect(response.parsed_body["data"].map { |post| post["id"] }).not_to include(posts(:one).id)
     end
   end
 end

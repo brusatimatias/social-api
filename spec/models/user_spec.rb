@@ -60,4 +60,52 @@ RSpec.describe User, type: :model do
       expect(json["user"]["full_name"]).to eq(users(:two).full_name)
     end
   end
+
+  describe "#destroy" do
+    it "sets deleted_at instead of destroying the record" do
+      user = users(:one)
+
+      expect { user.destroy }.to change(user, :deleted_at).from(nil)
+      expect(User.with_deleted.exists?(user.id)).to be true
+    end
+
+    it "also soft-deletes the user's own posts" do
+      users(:one).destroy
+
+      expect(posts(:one).reload.deleted_at).to be_present
+    end
+
+    it "leaves other users' posts untouched" do
+      users(:one).destroy
+
+      expect(posts(:two).reload.deleted_at).to be_nil
+    end
+  end
+
+  describe "default_scope" do
+    it "excludes deactivated users from normal queries" do
+      users(:one).destroy
+
+      expect(User.all).not_to include(users(:one))
+      expect(User.find_by(id: users(:one).id)).to be_nil
+    end
+
+    it "still finds a deactivated user via .with_deleted" do
+      users(:one).destroy
+
+      expect(User.with_deleted).to include(users(:one))
+    end
+  end
+
+  describe "email reuse after deactivation" do
+    it "allows a new user to reuse a deactivated user's email" do
+      users(:one).destroy
+
+      new_user = User.new(
+        name: "New", lastname: "Owner", email: users(:one).email.upcase, password: "password"
+      )
+
+      expect(new_user).to be_valid
+    end
+  end
 end
