@@ -21,6 +21,16 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response.parsed_body["data"].first["comments_count"]).to eq(1)
       expect(response.parsed_body["data"].first["likes_count"]).to eq(1)
     end
+
+    it "rejects an invalid status filter" do
+      get api_v1_posts_path, params: { status: "invalid" }, headers: auth_headers
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body["data"]).to be_nil
+      expect(response.parsed_body["errors"]).to eq(
+        ["Invalid status. Allowed values: #{Post.statuses.keys.join(", ")}"]
+      )
+    end
   end
 
   describe "POST /api/v1/posts" do

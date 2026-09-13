@@ -2,6 +2,7 @@ module Api
   module V1
     class PostsController < ApplicationController
       before_action :set_post, only: %i[show update destroy]
+      before_action :validate_status_filter, only: :index
 
       def index
         render json: Api::V1::Response.success(
@@ -50,6 +51,14 @@ module Api
 
       def post_params
         params.require(:post).permit(:content, :visibility, :status, media: [])
+      end
+
+      def validate_status_filter
+        return if params[:status].blank? || Post.statuses.key?(params[:status])
+
+        render json: Api::V1::Response.error(
+          "Invalid status. Allowed values: #{Post.statuses.keys.join(", ")}"
+        ), status: :bad_request
       end
     end
   end
