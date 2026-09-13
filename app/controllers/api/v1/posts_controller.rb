@@ -2,12 +2,12 @@ module Api
   module V1
     class PostsController < ApplicationController
       before_action :set_post, only: %i[show update destroy]
+      before_action :validate_status_filter, only: :index
 
       def index
-        posts = current_user.posts
-        posts = posts.where(status: params[:status]) if params[:status].present?
         render json: Api::V1::Response.success(
-          data: posts.as_json(include: { comments: { include: :user }, likes: { include: :user } })
+          data: current_user.posts.with_counts.for_status(params[:status]),
+          meta: { statuses: Post.statuses.keys }
         )
       end
 
@@ -46,11 +46,19 @@ module Api
       private
 
       def set_post
-        @post = current_user.posts.find(params[:id])
+        @post = current_user.posts.includes(comments: :user, likes: :user).find(params[:id])
       end
 
       def post_params
         params.require(:post).permit(:content, :visibility, :status, media: [])
+      end
+
+      def validate_status_filter
+        return if params[:status].blank? || Post.statuses.key?(params[:status])
+
+        render json: Api::V1::Response.error(
+          "Invalid status. Allowed values: #{Post.statuses.keys.join(", ")}"
+        ), status: :bad_request
       end
     end
   end

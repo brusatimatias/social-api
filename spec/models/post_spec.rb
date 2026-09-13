@@ -29,4 +29,15 @@ RSpec.describe Post, type: :model do
   it "belongs to a user" do
     expect(posts(:one).user).to eq(users(:one))
   end
+
+  it "includes comment and like counts" do
+    post = users(:one).posts.with_counts.find(posts(:one).id)
+
+    expect(post.comments_count).to eq(1)
+    expect(post.likes_count).to eq(1)
+  end
+
+  it "filters by status when provided" do
+    expect(users(:two).posts.for_status("draft")).to contain_exactly(posts(:two))
+  end
 end

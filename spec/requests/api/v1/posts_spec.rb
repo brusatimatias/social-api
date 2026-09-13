@@ -7,8 +7,10 @@ RSpec.describe "Api::V1::Posts", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"].map { |post| post["content"] }).to include(posts(:one).content)
-      expect(response.parsed_body["data"].first).to have_key("comments")
-      expect(response.parsed_body["data"].first).to have_key("likes")
+      post = response.parsed_body["data"].find { |item| item["id"] == posts(:one).id }
+      expect(post["comments_count"]).to eq(1)
+      expect(post["likes_count"]).to eq(1)
+      expect(response.parsed_body["meta"]["statuses"]).to eq(Post.statuses.keys)
     end
 
     it "filters posts by status" do
@@ -16,6 +18,18 @@ RSpec.describe "Api::V1::Posts", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"].map { |post| post["id"] }).to eq([posts(:two).id])
+      expect(response.parsed_body["data"].first["comments_count"]).to eq(1)
+      expect(response.parsed_body["data"].first["likes_count"]).to eq(1)
+    end
+
+    it "rejects an invalid status filter" do
+      get api_v1_posts_path, params: { status: "invalid" }, headers: auth_headers
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body["data"]).to be_nil
+      expect(response.parsed_body["errors"]).to eq(
+        ["Invalid status. Allowed values: #{Post.statuses.keys.join(", ")}"]
+      )
     end
   end
 
@@ -54,7 +68,13 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response.parsed_body["data"]["content"]).to eq(posts(:one).content)
       expect(response.parsed_body["data"]["comments"].map { |comment| comment["content"] })
         .to include(comments(:one).content)
-      expect(response.parsed_body["data"]["likes"].map { |like| like["id"] }).to include(likes(:one).id)
+      comment = response.parsed_body["data"]["comments"].find { |item| item["id"] == comments(:one).id }
+      expect(comment["user"]["id"]).to eq(users(:two).id)
+      expect(comment["user"]["name"]).to eq(users(:two).name)
+
+      like = response.parsed_body["data"]["likes"].find { |item| item["id"] == likes(:one).id }
+      expect(like["user"]["id"]).to eq(users(:two).id)
+      expect(like["user"]["name"]).to eq(users(:two).name)
     end
 
     it "returns a standard error for an unknown post" do
