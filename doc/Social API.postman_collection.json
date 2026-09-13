@@ -1,0 +1,521 @@
+{
+  "info": {
+    "name": "Social API",
+    "description": "Ruby on Rails 7 social API: users register, follow each other, post content, and comment/like posts. All responses follow the { data, errors, meta } envelope. Run 'Register' or 'Login' first — the token is saved automatically to the {{token}} collection variable and used by every other request.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000/api/v1", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "post_id", "value": "", "type": "string" },
+    { "key": "comment_id", "value": "", "type": "string" },
+    { "key": "like_id", "value": "", "type": "string" },
+    { "key": "user_uuid", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"user\": {\n    \"name\": \"Ada\",\n    \"lastname\": \"Lovelace\",\n    \"email\": \"ada@example.com\",\n    \"password\": \"password\",\n    \"password_confirmation\": \"password\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('token', body.data.token);",
+                  "    pm.collectionVariables.set('user_uuid', body.data.user.uuid);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"auth\": {\n    \"email\": \"ada@example.com\",\n    \"password\": \"password\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('token', body.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Current User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"user\": {\n    \"name\": \"Augusta\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Current User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "List My Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/posts?status=published",
+              "host": ["{{base_url}}"],
+              "path": ["posts"],
+              "query": [
+                { "key": "status", "value": "published", "description": "Optional: draft | published | archived" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Show Post",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/posts/{{post_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["posts", "{{post_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"post\": {\n    \"content\": \"My first post\",\n    \"visibility\": \"public\",\n    \"status\": \"published\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/posts",
+              "host": ["{{base_url}}"],
+              "path": ["posts"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('post_id', pm.response.json().data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Create Post with Media",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "post[content]", "value": "A post with a photo", "type": "text" },
+                { "key": "post[visibility]", "value": "public", "type": "text" },
+                { "key": "post[status]", "value": "published", "type": "text" },
+                { "key": "post[media][]", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/posts",
+              "host": ["{{base_url}}"],
+              "path": ["posts"]
+            },
+            "description": "Allowed types: image/png, image/jpeg, image/webp, image/gif, video/mp4, video/quicktime. Max 4 files, 10MB each."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('post_id', pm.response.json().data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Update Post",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"post\": {\n    \"content\": \"An updated post\",\n    \"visibility\": \"followers\",\n    \"status\": \"published\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/posts/{{post_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["posts", "{{post_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Post",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/posts/{{post_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["posts", "{{post_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"comment\": {\n    \"content\": \"Great post!\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/posts/{{post_id}}/comments",
+              "host": ["{{base_url}}"],
+              "path": ["posts", "{{post_id}}", "comments"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('comment_id', pm.response.json().data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Update Comment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "options": { "raw": { "language": "json" } },
+              "raw": "{\n  \"comment\": {\n    \"content\": \"Updated comment\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/posts/{{post_id}}/comments/{{comment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["posts", "{{post_id}}", "comments", "{{comment_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/posts/{{post_id}}/comments/{{comment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["posts", "{{post_id}}", "comments", "{{comment_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Likes",
+      "item": [
+        {
+          "name": "Create Like",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/posts/{{post_id}}/likes",
+              "host": ["{{base_url}}"],
+              "path": ["posts", "{{post_id}}", "likes"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set('like_id', pm.response.json().data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Delete Like",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/posts/{{post_id}}/likes/{{like_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["posts", "{{post_id}}", "likes", "{{like_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Followers",
+      "item": [
+        {
+          "name": "List My Followers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/followers",
+              "host": ["{{base_url}}"],
+              "path": ["users", "followers"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Another User's Followers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/followers?user_id={{user_uuid}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "followers"],
+              "query": [
+                { "key": "user_id", "value": "{{user_uuid}}", "description": "Target user's uuid" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List My Following",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/following",
+              "host": ["{{base_url}}"],
+              "path": ["users", "following"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Another User's Following",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/following?user_id={{user_uuid}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "following"],
+              "query": [
+                { "key": "user_id", "value": "{{user_uuid}}", "description": "Target user's uuid" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Follow User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_uuid}}/follow",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_uuid}}", "follow"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unfollow User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_uuid}}/follow",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_uuid}}", "follow"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Feed",
+      "item": [
+        {
+          "name": "Get Feed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/feed?page=1&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["feed"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" }
+              ]
+            },
+            "description": "Published posts (public, or followers-visible from users you follow), ordered newest first. per_page max is 50."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
