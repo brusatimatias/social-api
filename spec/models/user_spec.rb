@@ -44,4 +44,20 @@ RSpec.describe User, type: :model do
     expect(users(:one).authenticate("password")).to eq(users(:one))
     expect(users(:one).authenticate("wrong password")).to be_falsey
   end
+
+  describe "serialization" do
+    it "excludes the password digest and includes the full name" do
+      json = users(:one).as_json
+
+      expect(json).not_to have_key("password_digest")
+      expect(json["full_name"]).to eq(users(:one).full_name)
+    end
+
+    it "excludes the password digest when serialized as a nested association" do
+      json = comments(:one).as_json(include: :user)
+
+      expect(json["user"]).not_to have_key("password_digest")
+      expect(json["user"]["full_name"]).to eq(users(:two).full_name)
+    end
+  end
 end

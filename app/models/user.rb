@@ -26,7 +26,11 @@ class User < ApplicationRecord
     [name, lastname].compact.join(" ")
   end
 
-  def as_json(options = {})
+  # Overriding serializable_hash (not as_json) so this also applies when a User is serialized as a
+  # nested association (e.g. Post#as_json(include: { comments: { include: :user } })), which Rails
+  # builds by calling serializable_hash on the association directly, bypassing as_json overrides.
+  def serializable_hash(options = nil)
+    options ||= {}
     super(options.merge(except: Array(options[:except]) | [:password_digest])).merge("full_name" => full_name)
   end
 
