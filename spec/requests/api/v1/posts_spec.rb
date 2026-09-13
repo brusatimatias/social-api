@@ -7,8 +7,9 @@ RSpec.describe "Api::V1::Posts", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"].map { |post| post["content"] }).to include(posts(:one).content)
-      expect(response.parsed_body["data"].first).to have_key("comments")
-      expect(response.parsed_body["data"].first).to have_key("likes")
+      post = response.parsed_body["data"].find { |item| item["id"] == posts(:one).id }
+      expect(post["comments_count"]).to eq(1)
+      expect(post["likes_count"]).to eq(1)
     end
 
     it "filters posts by status" do
@@ -16,6 +17,8 @@ RSpec.describe "Api::V1::Posts", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"].map { |post| post["id"] }).to eq([posts(:two).id])
+      expect(response.parsed_body["data"].first["comments_count"]).to eq(1)
+      expect(response.parsed_body["data"].first["likes_count"]).to eq(1)
     end
   end
 

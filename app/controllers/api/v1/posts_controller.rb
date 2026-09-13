@@ -4,10 +4,8 @@ module Api
       before_action :set_post, only: %i[show update destroy]
 
       def index
-        posts = current_user.posts
-        posts = posts.where(status: params[:status]) if params[:status].present?
         render json: Api::V1::Response.success(
-          data: posts.as_json(include: { comments: { include: :user }, likes: { include: :user } })
+          data: current_user.posts.with_counts.for_status(params[:status])
         )
       end
 
