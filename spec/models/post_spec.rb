@@ -16,8 +16,21 @@ RSpec.describe Post, type: :model do
     post = Post.new(content: "A post", user: users(:one))
 
     expect(post).to be_valid
-    expect(post.visibility).to eq("public")
-    expect(post.status).to eq("published")
+    expect(post).to be_visibility_public
+    expect(post).to be_published
+  end
+
+  it "defines visibility and status values through enums" do
+    expect(Post.visibilities).to eq(
+      "public" => "public",
+      "followers" => "followers",
+      "private" => "private"
+    )
+    expect(Post.statuses).to eq(
+      "draft" => "draft",
+      "published" => "published",
+      "archived" => "archived"
+    )
   end
 
   it "sets edited_at when content changes" do

@@ -4,6 +4,7 @@ class Post < ApplicationRecord
   has_many :likes, dependent: :destroy
   has_many_attached :media
 
+  enum :visibility, { public: "public", followers: "followers", private: "private" }, prefix: true
   enum :status, { draft: "draft", published: "published", archived: "archived" }
 
   scope :with_counts, lambda {
@@ -18,8 +19,6 @@ class Post < ApplicationRecord
   scope :for_status, ->(status) { status.present? ? where(status:) : all }
 
   validates :content, presence: true
-  validates :visibility, inclusion: { in: %w[public followers private] }
-  validates :status, inclusion: { in: %w[draft published archived] }
 
   before_update :set_edited_at, if: :content_changed?
 
