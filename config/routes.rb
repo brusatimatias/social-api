@@ -9,6 +9,8 @@ Rails.application.routes.draw do
         delete :me, to: "authentication#destroy"
       end
 
+      get :feed, to: "feed#index"
+
       resources :users, only: [] do
         get :followers, on: :collection
         get :following, on: :collection
