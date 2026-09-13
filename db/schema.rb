@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_12_031000) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_13_172549) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -81,6 +81,17 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_12_031000) do
     t.index ["user_id"], name: "index_posts_on_user_id"
   end
 
+  create_table "revoked_tokens", force: :cascade do |t|
+    t.string "jti", null: false
+    t.bigint "user_id", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_revoked_tokens_on_expires_at"
+    t.index ["jti"], name: "index_revoked_tokens_on_jti", unique: true
+    t.index ["user_id"], name: "index_revoked_tokens_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name", null: false
     t.string "lastname", null: false
@@ -101,4 +112,5 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_12_031000) do
   add_foreign_key "likes", "posts"
   add_foreign_key "likes", "users"
   add_foreign_key "posts", "users"
+  add_foreign_key "revoked_tokens", "users"
 end

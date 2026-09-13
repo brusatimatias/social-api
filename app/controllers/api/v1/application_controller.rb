@@ -34,7 +34,7 @@ module Api
 
       def issue_token(user)
         JWT.encode(
-          { sub: user.id, exp: 24.hours.from_now.to_i },
+          { sub: user.id, jti: SecureRandom.uuid, exp: 24.hours.from_now.to_i },
           Rails.application.secret_key_base,
           "HS256"
         )
@@ -44,12 +44,14 @@ module Api
         return @decoded_token if defined?(@decoded_token)
 
         token = request.headers["Authorization"].to_s.split(" ").last
-        @decoded_token = JWT.decode(
+        payload = JWT.decode(
           token,
           Rails.application.secret_key_base,
           true,
           algorithm: "HS256"
         ).first
+
+        @decoded_token = RevokedToken.exists?(jti: payload["jti"]) ? nil : payload
       rescue JWT::DecodeError
         @decoded_token = nil
       end

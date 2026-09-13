@@ -52,6 +52,34 @@ RSpec.describe "Api::V1::Authentication", type: :request do
     end
   end
 
+  describe "DELETE /api/v1/auth/logout" do
+    it "revokes the current token" do
+      post api_v1_auth_login_path, params: {
+        auth: { email: users(:one).email, password: "password" }
+      }, as: :json
+      token = response.parsed_body["data"]["token"]
+
+      expect do
+        delete api_v1_auth_logout_path, headers: { "Authorization" => "Bearer #{token}" }
+      end.to change(RevokedToken, :count).by(1)
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "rejects reusing a token after logout" do
+      post api_v1_auth_login_path, params: {
+        auth: { email: users(:one).email, password: "password" }
+      }, as: :json
+      token = response.parsed_body["data"]["token"]
+
+      delete api_v1_auth_logout_path, headers: { "Authorization" => "Bearer #{token}" }
+      get api_v1_auth_me_path, headers: { "Authorization" => "Bearer #{token}" }
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.parsed_body["errors"]).to eq(["Unauthorized"])
+    end
+  end
+
   describe "GET /api/v1/auth/me" do
     it "returns the authenticated user" do
       post api_v1_auth_login_path, params: {

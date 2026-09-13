@@ -12,6 +12,7 @@ class User < ApplicationRecord
                                      dependent: :destroy,
                                      inverse_of: :following
   has_many :followers, through: :follower_relationships, source: :follower
+  has_many :revoked_tokens, dependent: :destroy
   has_secure_password
 
   before_validation :assign_uuid, on: :create
