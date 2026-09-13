@@ -4,6 +4,8 @@ class Post < ApplicationRecord
   has_many :likes, dependent: :destroy
   has_many_attached :media
 
+  enum :status, { draft: "draft", published: "published", archived: "archived" }
+
   scope :with_counts, lambda {
     left_joins(:comments, :likes)
       .select(

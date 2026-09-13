@@ -5,7 +5,8 @@ module Api
 
       def index
         render json: Api::V1::Response.success(
-          data: current_user.posts.with_counts.for_status(params[:status])
+          data: current_user.posts.with_counts.for_status(params[:status]),
+          meta: { statuses: Post.statuses.keys }
         )
       end
 

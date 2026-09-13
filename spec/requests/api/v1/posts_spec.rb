@@ -10,6 +10,7 @@ RSpec.describe "Api::V1::Posts", type: :request do
       post = response.parsed_body["data"].find { |item| item["id"] == posts(:one).id }
       expect(post["comments_count"]).to eq(1)
       expect(post["likes_count"]).to eq(1)
+      expect(response.parsed_body["meta"]["statuses"]).to eq(Post.statuses.keys)
     end
 
     it "filters posts by status" do
