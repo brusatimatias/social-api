@@ -53,4 +53,54 @@ RSpec.describe Post, type: :model do
   it "filters by status when provided" do
     expect(users(:two).posts.for_status("draft")).to contain_exactly(posts(:two))
   end
+
+  describe "media" do
+    def attach(post, filename, content_type)
+      post.media.attach(
+        io: File.open(Rails.root.join("spec/fixtures/files/#{filename}")),
+        filename: filename,
+        content_type: content_type
+      )
+    end
+
+    it "is valid with an allowed media type" do
+      post = Post.new(content: "A post with an image", user: users(:one))
+      attach(post, "avatar.png", "image/png")
+
+      expect(post).to be_valid
+    end
+
+    it "rejects an unsupported media type" do
+      post = Post.new(content: "A post with a bad attachment", user: users(:one))
+      attach(post, "document.txt", "text/plain")
+
+      expect(post).not_to be_valid
+      expect(post.errors[:media]).to include(/unsupported content type/)
+    end
+
+    it "rejects more than the maximum number of files" do
+      post = Post.new(content: "Too much media", user: users(:one))
+      (Post::MAX_MEDIA_FILES + 1).times { attach(post, "avatar.png", "image/png") }
+
+      expect(post).not_to be_valid
+      expect(post.errors[:media]).to include("can have at most #{Post::MAX_MEDIA_FILES} files")
+    end
+
+    it "rejects a file over the size limit" do
+      stub_const("Post::MAX_MEDIA_SIZE", 10)
+      post = Post.new(content: "A post with a huge file", user: users(:one))
+      attach(post, "avatar.png", "image/png")
+
+      expect(post).not_to be_valid
+      expect(post.errors[:media]).to include(/exceeds the 0MB size limit/)
+    end
+
+    it "serializes media as absolute URLs" do
+      post = posts(:one)
+      attach(post, "avatar.png", "image/png")
+      post.save!
+
+      expect(post.as_json["media"]).to all(match(%r{\Ahttp://}))
+    end
+  end
 end

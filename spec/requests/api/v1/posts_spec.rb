@@ -58,6 +58,32 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.parsed_body["errors"]).not_to be_empty
     end
+
+    it "creates a post with a media attachment and returns its URL" do
+      expect do
+        post api_v1_posts_path, params: {
+          post: { content: "A post with a photo", media: [fixture_file_upload("avatar.png", "image/png")] }
+        }, headers: auth_headers
+      end.to change(Post, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body["data"]["media"].size).to eq(1)
+      expect(response.parsed_body["data"]["media"].first).to match(%r{\Ahttp://})
+    end
+
+    it "rejects a post with an unsupported media type" do
+      expect do
+        post api_v1_posts_path, params: {
+          post: {
+            content: "A post with a bad file",
+            media: [fixture_file_upload("document.txt", "text/plain")]
+          }
+        }, headers: auth_headers
+      end.not_to change(Post, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body["errors"]).not_to be_empty
+    end
   end
 
   describe "resource actions" do

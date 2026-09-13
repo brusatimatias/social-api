@@ -7,7 +7,7 @@ module Api
 
       def index
         render json: Api::V1::Response.success(
-          data: current_user.posts.with_counts.for_status(params[:status]),
+          data: current_user.posts.with_counts.for_status(params[:status]).with_attached_media,
           meta: { statuses: Post.statuses.keys }
         )
       end
@@ -47,11 +47,17 @@ module Api
       private
 
       def set_visible_post
-        @post = Post.visible_to(current_user).includes(comments: :user, likes: :user).find(params[:id])
+        @post = Post.visible_to(current_user)
+          .includes(comments: :user, likes: :user)
+          .with_attached_media
+          .find(params[:id])
       end
 
       def set_own_post
-        @post = current_user.posts.includes(comments: :user, likes: :user).find(params[:id])
+        @post = current_user.posts
+          .includes(comments: :user, likes: :user)
+          .with_attached_media
+          .find(params[:id])
       end
 
       def post_params

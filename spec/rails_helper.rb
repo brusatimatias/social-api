@@ -11,6 +11,8 @@ RSpec.configure do |config|
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!
 
+  config.before { ActiveStorage::Current.url_options = { protocol: "http", host: "test.host", port: nil } }
+
   config.include Module.new {
     def auth_headers(user = users(:one))
       token = JWT.encode(
