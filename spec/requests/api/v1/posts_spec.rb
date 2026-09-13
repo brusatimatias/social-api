@@ -58,6 +58,43 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.parsed_body["errors"]).not_to be_empty
     end
+
+    it "rejects an invalid visibility instead of raising" do
+      expect do
+        post api_v1_posts_path, params: {
+          post: { content: "A new post", visibility: "invalid" }
+        }, headers: auth_headers, as: :json
+      end.not_to change(Post, :count)
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body["errors"]).to eq(["'invalid' is not a valid visibility"])
+    end
+
+    it "creates a post with a media attachment and returns its URL" do
+      expect do
+        post api_v1_posts_path, params: {
+          post: { content: "A post with a photo", media: [fixture_file_upload("avatar.png", "image/png")] }
+        }, headers: auth_headers
+      end.to change(Post, :count).by(1)
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body["data"]["media"].size).to eq(1)
+      expect(response.parsed_body["data"]["media"].first).to match(%r{\Ahttp://})
+    end
+
+    it "rejects a post with an unsupported media type" do
+      expect do
+        post api_v1_posts_path, params: {
+          post: {
+            content: "A post with a bad file",
+            media: [fixture_file_upload("document.txt", "text/plain")]
+          }
+        }, headers: auth_headers
+      end.not_to change(Post, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.parsed_body["errors"]).not_to be_empty
+    end
   end
 
   describe "resource actions" do
@@ -71,9 +108,11 @@ RSpec.describe "Api::V1::Posts", type: :request do
       comment = response.parsed_body["data"]["comments"].find { |item| item["id"] == comments(:one).id }
       expect(comment["user"]["id"]).to eq(users(:two).id)
       expect(comment["user"]["name"]).to eq(users(:two).name)
+      expect(comment["user"]).not_to have_key("password_digest")
 
       like = response.parsed_body["data"]["likes"].find { |item| item["id"] == likes(:one).id }
       expect(like["user"]["id"]).to eq(users(:two).id)
+      expect(like["user"]).not_to have_key("password_digest")
       expect(like["user"]["name"]).to eq(users(:two).name)
     end
 
@@ -82,6 +121,37 @@ RSpec.describe "Api::V1::Posts", type: :request do
 
       expect(response).to have_http_status(:not_found)
       expect(response.parsed_body["errors"]).to eq(["Resource not found"])
+    end
+
+    it "shows another user's public post" do
+      get api_v1_post_path(posts(:one).id), headers: auth_headers(users(:three))
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["data"]["content"]).to eq(posts(:one).content)
+    end
+
+    it "hides a draft post from a non-owner even when they follow the author" do
+      get api_v1_post_path(posts(:two).id), headers: auth_headers(users(:one))
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "shows a published followers-only post to a follower" do
+      get api_v1_post_path(posts(:two_followers).id), headers: auth_headers(users(:one))
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "hides a published followers-only post from a non-follower" do
+      get api_v1_post_path(posts(:two_followers).id), headers: auth_headers(users(:three))
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "hides a published private post from anyone but the owner" do
+      get api_v1_post_path(posts(:two_private).id), headers: auth_headers(users(:one))
+
+      expect(response).to have_http_status(:not_found)
     end
 
     it "updates a post" do
@@ -96,13 +166,56 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response.parsed_body["data"]["edited_at"]).not_to be_nil
     end
 
-    it "deletes a post" do
+    it "rejects an invalid status instead of raising" do
+      patch api_v1_post_path(posts(:one).id), params: {
+        post: { status: "invalid" }
+      }, headers: auth_headers, as: :json
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body["errors"]).to eq(["'invalid' is not a valid status"])
+    end
+
+    it "rejects updating a post that belongs to someone else" do
+      patch api_v1_post_path(posts(:one).id), params: {
+        post: { content: "Hijacked" }
+      }, headers: auth_headers(users(:two)), as: :json
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "rejects deleting a post that belongs to someone else" do
+      expect do
+        delete api_v1_post_path(posts(:one).id), headers: auth_headers(users(:two))
+      end.not_to change(Post, :count)
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "soft-deletes a post instead of destroying it" do
       expect do
         delete api_v1_post_path(posts(:one).id), headers: auth_headers
-      end.to change(Post, :count).by(-1)
+      end.to change(Post, :count).by(-1) # hidden from normal queries, not actually destroyed
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"]["id"]).to eq(posts(:one).id)
+      expect(posts(:one).reload.deleted_at).to be_present
+      expect(Post.with_deleted.exists?(posts(:one).id)).to be true
+    end
+
+    it "hides a soft-deleted post from its owner afterwards" do
+      delete api_v1_post_path(posts(:one).id), headers: auth_headers
+
+      get api_v1_post_path(posts(:one).id), headers: auth_headers
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "excludes a soft-deleted post from the index" do
+      delete api_v1_post_path(posts(:one).id), headers: auth_headers
+
+      get api_v1_posts_path, headers: auth_headers
+
+      expect(response.parsed_body["data"].map { |post| post["id"] }).not_to include(posts(:one).id)
     end
   end
 end

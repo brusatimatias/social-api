@@ -28,6 +28,16 @@ module Api
           end
         end
 
+        def logout
+          RevokedToken.create!(
+            user: current_user,
+            jti: decoded_token["jti"],
+            expires_at: Time.at(decoded_token["exp"])
+          )
+
+          render json: Api::V1::Response.success(data: { message: "Logged out" })
+        end
+
         def me
           render json: Api::V1::Response.success(data: current_user)
         end

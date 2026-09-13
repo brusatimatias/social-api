@@ -1,7 +1,7 @@
 module Api
   module V1
     class CommentsController < ApplicationController
-      before_action :set_post
+      before_action :set_post, only: :create
       before_action :set_comment, only: %i[update destroy]
 
       def create
@@ -33,11 +33,11 @@ module Api
       private
 
       def set_comment
-        @comment = @post.comments.find(params[:id])
+        @comment = current_user.comments.find_by!(id: params[:id], post_id: params[:post_id])
       end
 
       def set_post
-        @post = current_user.posts.find(params[:post_id])
+        @post = Post.visible_to(current_user).find(params[:post_id])
       end
 
       def comment_params

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_09_12_031000) do
+ActiveRecord::Schema[7.0].define(version: 2026_09_13_181038) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -35,6 +35,12 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_12_031000) do
     t.string "checksum"
     t.datetime "created_at", null: false
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
   create_table "comments", force: :cascade do |t|
@@ -78,7 +84,20 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_12_031000) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_posts_on_deleted_at"
     t.index ["user_id"], name: "index_posts_on_user_id"
+  end
+
+  create_table "revoked_tokens", force: :cascade do |t|
+    t.string "jti", null: false
+    t.bigint "user_id", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_revoked_tokens_on_expires_at"
+    t.index ["jti"], name: "index_revoked_tokens_on_jti", unique: true
+    t.index ["user_id"], name: "index_revoked_tokens_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -89,11 +108,14 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_12_031000) do
     t.string "password_digest", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index "lower((email)::text)", name: "index_users_on_lower_email", unique: true
+    t.datetime "deleted_at"
+    t.index "lower((email)::text)", name: "index_users_on_lower_email", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["uuid"], name: "index_users_on_uuid", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
   add_foreign_key "followers", "users", column: "follower_id"
@@ -101,4 +123,5 @@ ActiveRecord::Schema[7.0].define(version: 2026_09_12_031000) do
   add_foreign_key "likes", "posts"
   add_foreign_key "likes", "users"
   add_foreign_key "posts", "users"
+  add_foreign_key "revoked_tokens", "users"
 end

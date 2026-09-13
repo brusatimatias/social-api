@@ -1,12 +1,15 @@
 module Api
   module V1
     class PostsController < ApplicationController
-      before_action :set_post, only: %i[show update destroy]
+      before_action :set_visible_post, only: :show
+      before_action :set_own_post, only: %i[update destroy]
       before_action :validate_status_filter, only: :index
+
+      rescue_from ArgumentError, with: :render_invalid_enum_value
 
       def index
         render json: Api::V1::Response.success(
-          data: current_user.posts.with_counts.for_status(params[:status]),
+          data: current_user.posts.with_counts.for_status(params[:status]).with_attached_media,
           meta: { statuses: Post.statuses.keys }
         )
       end
@@ -45,8 +48,18 @@ module Api
 
       private
 
-      def set_post
-        @post = current_user.posts.includes(comments: :user, likes: :user).find(params[:id])
+      def set_visible_post
+        @post = Post.visible_to(current_user)
+          .includes(comments: :user, likes: :user)
+          .with_attached_media
+          .find(params[:id])
+      end
+
+      def set_own_post
+        @post = current_user.posts
+          .includes(comments: :user, likes: :user)
+          .with_attached_media
+          .find(params[:id])
       end
 
       def post_params
@@ -59,6 +72,10 @@ module Api
         render json: Api::V1::Response.error(
           "Invalid status. Allowed values: #{Post.statuses.keys.join(", ")}"
         ), status: :bad_request
+      end
+
+      def render_invalid_enum_value(error)
+        render json: Api::V1::Response.error(error.message), status: :bad_request
       end
     end
   end

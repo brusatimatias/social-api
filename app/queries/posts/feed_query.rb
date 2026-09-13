@@ -35,6 +35,7 @@ module Posts
         .where(visibility: %w[public followers])
         .with_counts
         .includes(comments: :user, likes: :user)
+        .with_attached_media
         .order(created_at: :desc, id: :desc)
     end
 
