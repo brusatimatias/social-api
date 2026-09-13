@@ -4,6 +4,17 @@ module Api
       before_action :set_user, only: %i[follow unfollow]
       before_action :set_relationship_user, only: %i[followers following]
 
+      def search
+        result = Users::SearchQuery.new(
+          current_user,
+          query: params[:q],
+          page: params.fetch(:page, 1),
+          per_page: params.fetch(:per_page, Users::SearchQuery::DEFAULT_PER_PAGE)
+        ).call
+
+        render json: Api::V1::Response.success(data: result[:users], meta: result[:meta])
+      end
+
       def followers
         render json: Api::V1::Response.success(data: @relationship_user.followers)
       end

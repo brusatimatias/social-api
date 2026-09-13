@@ -13,6 +13,7 @@ Rails.application.routes.draw do
       get :feed, to: "feed#index"
 
       resources :users, only: [] do
+        get :search, on: :collection
         get :followers, on: :collection
         get :following, on: :collection
         post :follow, on: :member
