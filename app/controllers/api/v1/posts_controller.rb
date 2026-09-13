@@ -45,7 +45,7 @@ module Api
       private
 
       def set_post
-        @post = current_user.posts.find(params[:id])
+        @post = current_user.posts.includes(comments: :user, likes: :user).find(params[:id])
       end
 
       def post_params

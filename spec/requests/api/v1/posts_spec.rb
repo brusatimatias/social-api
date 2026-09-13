@@ -58,7 +58,13 @@ RSpec.describe "Api::V1::Posts", type: :request do
       expect(response.parsed_body["data"]["content"]).to eq(posts(:one).content)
       expect(response.parsed_body["data"]["comments"].map { |comment| comment["content"] })
         .to include(comments(:one).content)
-      expect(response.parsed_body["data"]["likes"].map { |like| like["id"] }).to include(likes(:one).id)
+      comment = response.parsed_body["data"]["comments"].find { |item| item["id"] == comments(:one).id }
+      expect(comment["user"]["id"]).to eq(users(:two).id)
+      expect(comment["user"]["name"]).to eq(users(:two).name)
+
+      like = response.parsed_body["data"]["likes"].find { |item| item["id"] == likes(:one).id }
+      expect(like["user"]["id"]).to eq(users(:two).id)
+      expect(like["user"]["name"]).to eq(users(:two).name)
     end
 
     it "returns a standard error for an unknown post" do
