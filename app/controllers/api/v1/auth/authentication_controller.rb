@@ -70,7 +70,8 @@ module Api
             :lastname,
             :email,
             :password,
-            :password_confirmation
+            :password_confirmation,
+            :avatar
           )
         end
 

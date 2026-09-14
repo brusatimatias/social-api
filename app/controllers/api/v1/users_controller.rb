@@ -16,11 +16,11 @@ module Api
       end
 
       def followers
-        render json: Api::V1::Response.success(data: @relationship_user.followers)
+        render json: Api::V1::Response.success(data: @relationship_user.followers.with_attached_avatar)
       end
 
       def following
-        render json: Api::V1::Response.success(data: @relationship_user.following)
+        render json: Api::V1::Response.success(data: @relationship_user.following.with_attached_avatar)
       end
 
       def follow

@@ -52,14 +52,22 @@ module Api
 
       def set_visible_post
         @post = Post.visible_to(current_user)
-          .includes(:user, comments: :user, likes: :user)
+          .includes(
+            :user,
+            comments: { user: { avatar_attachment: :blob } },
+            likes: { user: { avatar_attachment: :blob } }
+          )
           .with_attached_media
           .find(params[:id])
       end
 
       def set_own_post
         @post = current_user.posts
-          .includes(:user, comments: :user, likes: :user)
+          .includes(
+            :user,
+            comments: { user: { avatar_attachment: :blob } },
+            likes: { user: { avatar_attachment: :blob } }
+          )
           .with_attached_media
           .find(params[:id])
       end
