@@ -4,7 +4,7 @@ module Api
       before_action :authenticate_user!
       rescue_from ActionController::ParameterMissing, with: :render_parameter_error
       rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
-      rescue_from Posts::FeedQuery::InvalidPagination, with: :render_pagination_error
+      rescue_from Paginatable::InvalidPagination, with: :render_pagination_error
 
       private
 
