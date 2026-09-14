@@ -1,4 +1,9 @@
 class User < ApplicationRecord
+  AVATAR_MAX_SIZE = 5.megabytes
+  AVATAR_ALLOWED_TYPES = %w[image/png image/jpeg image/webp image/gif].freeze
+
+  has_one_attached :avatar
+
   # dependent: :destroy on posts cascades as a soft-delete since Post is also acts_as_paranoid.
   # Comments/likes deliberately have no `dependent:` option (see Post) so deactivating an account
   # doesn't really delete their content. Followers/revoked_tokens are fine to hard-delete: they're
@@ -30,6 +35,7 @@ class User < ApplicationRecord
   validates :name, :lastname, presence: true
   validates :email, presence: true, uniqueness: { case_sensitive: false }, format: URI::MailTo::EMAIL_REGEXP
   validates :uuid, presence: true, uniqueness: true
+  validate :avatar_within_limits
 
   def full_name
     [name, lastname].compact.join(" ")
@@ -40,10 +46,29 @@ class User < ApplicationRecord
   # builds by calling serializable_hash on the association directly, bypassing as_json overrides.
   def serializable_hash(options = nil)
     options ||= {}
-    super(options.merge(except: Array(options[:except]) | [:password_digest])).merge("full_name" => full_name)
+    super(options.merge(except: Array(options[:except]) | [:password_digest]))
+      .merge("full_name" => full_name, "avatar_url" => avatar_url)
   end
 
   private
+
+  def avatar_url
+    return nil unless avatar.attached?
+
+    Rails.application.routes.url_helpers.rails_blob_url(avatar, **ActiveStorage::Current.url_options.to_h)
+  end
+
+  def avatar_within_limits
+    return unless avatar.attached? && avatar.blob
+
+    unless avatar.blob.content_type.in?(AVATAR_ALLOWED_TYPES)
+      errors.add(:avatar, "has an unsupported content type")
+    end
+
+    if avatar.blob.byte_size > AVATAR_MAX_SIZE
+      errors.add(:avatar, "exceeds the #{AVATAR_MAX_SIZE / 1.megabyte}MB size limit")
+    end
+  end
 
   def assign_uuid
     self.uuid ||= SecureRandom.uuid

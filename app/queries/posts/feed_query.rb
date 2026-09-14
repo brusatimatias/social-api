@@ -23,7 +23,11 @@ module Posts
         .where(user_id: user.following.select(:id), status: Post.statuses[:published])
         .where(visibility: %w[public followers])
         .with_counts
-        .includes(:user, comments: :user, likes: :user)
+        .includes(
+          :user,
+          comments: { user: { avatar_attachment: :blob } },
+          likes: { user: { avatar_attachment: :blob } }
+        )
         .with_attached_media
         .order(created_at: :desc, id: :desc)
     end

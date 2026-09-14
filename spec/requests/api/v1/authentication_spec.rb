@@ -20,6 +20,22 @@ RSpec.describe "Api::V1::Authentication", type: :request do
       expect(response.parsed_body["data"]["user"]["email"]).to eq("new.user@example.com")
     end
 
+    it "registers a user with an avatar and returns its URL" do
+      post api_v1_auth_register_path, params: {
+        user: {
+          name: "Katherine",
+          lastname: "Johnson",
+          email: "new.user@example.com",
+          password: "password",
+          password_confirmation: "password",
+          avatar: fixture_file_upload("avatar.png", "image/png")
+        }
+      }
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body["data"]["user"]["avatar_url"]).to match(%r{\Ahttp://})
+    end
+
     it "rejects invalid data" do
       expect do
         post api_v1_auth_register_path, params: {
@@ -99,6 +115,15 @@ RSpec.describe "Api::V1::Authentication", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"]["name"]).to eq("Augusta")
+    end
+
+    it "updates the authenticated user's avatar" do
+      patch api_v1_auth_me_path, params: {
+        user: { avatar: fixture_file_upload("avatar.png", "image/png") }
+      }, headers: auth_headers
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["data"]["avatar_url"]).to match(%r{\Ahttp://})
     end
 
     it "deactivates the authenticated user instead of destroying it" do

@@ -37,7 +37,7 @@ module Users
     end
 
     def paginated_users
-      users.offset(pagination_offset).limit(per_page)
+      users.offset(pagination_offset).limit(per_page).with_attached_avatar
     end
 
     def total_count

@@ -71,6 +71,10 @@ RSpec.describe User, type: :model do
       expect(json["full_name"]).to eq(users(:one).full_name)
     end
 
+    it "includes a nil avatar_url when no avatar is attached" do
+      expect(users(:one).as_json["avatar_url"]).to be_nil
+    end
+
     it "excludes the password digest when serialized as a nested association" do
       json = comments(:one).as_json(include: :user)
 
@@ -124,6 +128,48 @@ RSpec.describe User, type: :model do
       )
 
       expect(new_user).to be_valid
+    end
+  end
+
+  describe "avatar" do
+    def attach(user, filename, content_type)
+      user.avatar.attach(
+        io: File.open(Rails.root.join("spec/fixtures/files/#{filename}")),
+        filename: filename,
+        content_type: content_type
+      )
+    end
+
+    it "is valid with an allowed avatar type" do
+      user = users(:one)
+      attach(user, "avatar.png", "image/png")
+
+      expect(user).to be_valid
+    end
+
+    it "rejects an unsupported avatar type" do
+      user = users(:one)
+      attach(user, "document.txt", "text/plain")
+
+      expect(user).not_to be_valid
+      expect(user.errors[:avatar]).to include(/unsupported content type/)
+    end
+
+    it "rejects an avatar over the size limit" do
+      stub_const("User::AVATAR_MAX_SIZE", 10)
+      user = users(:one)
+      attach(user, "avatar.png", "image/png")
+
+      expect(user).not_to be_valid
+      expect(user.errors[:avatar]).to include(/exceeds the 0MB size limit/)
+    end
+
+    it "serializes avatar_url as an absolute URL" do
+      user = users(:one)
+      attach(user, "avatar.png", "image/png")
+      user.save!
+
+      expect(user.as_json["avatar_url"]).to match(%r{\Ahttp://})
     end
   end
 end
