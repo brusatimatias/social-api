@@ -1,0 +1,15 @@
+AllCops:
+  TargetRubyVersion: 3.2
+  DisabledByDefault: true
+  Exclude:
+    - "db/schema.rb"
+    - "vendor/**/*"
+    - "tmp/**/*"
+    - "log/**/*"
+
+Layout/LineLength:
+  Enabled: true
+  Max: 110
+
+Style/Documentation:
+  Enabled: false

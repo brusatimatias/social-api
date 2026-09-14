@@ -1,0 +1,11 @@
+one:
+  user: two
+  post: one
+
+two:
+  user: one
+  post: two
+
+three:
+  user: two
+  post: two_public

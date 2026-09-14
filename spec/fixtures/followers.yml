@@ -1,0 +1,7 @@
+one:
+  follower: one
+  following: two
+
+two:
+  follower: two
+  following: one

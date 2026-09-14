@@ -1,0 +1,14 @@
+one:
+  content: "A first comment"
+  user: two
+  post: one
+
+two:
+  content: "Another comment"
+  user: one
+  post: two
+
+three:
+  content: "Nice work"
+  user: two
+  post: two_public

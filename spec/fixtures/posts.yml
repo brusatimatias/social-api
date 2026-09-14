@@ -1,0 +1,31 @@
+one:
+  content: "A first post"
+  visibility: public
+  status: published
+  user: one
+
+two:
+  content: "Another post"
+  visibility: followers
+  status: draft
+  user: two
+
+two_public:
+  content: "A public followed post"
+  visibility: public
+  status: published
+  user: two
+  created_at: <%= 1.day.ago %>
+
+two_followers:
+  content: "A followed post"
+  visibility: followers
+  status: published
+  user: two
+  created_at: <%= 2.days.ago %>
+
+two_private:
+  content: "A private post"
+  visibility: private
+  status: published
+  user: two
