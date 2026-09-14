@@ -10,6 +10,9 @@ RSpec.describe "Api::V1::Feed", type: :request do
       expect(data.map { |post| post["id"] }).to eq([posts(:two_public).id, posts(:two_followers).id])
       expect(data.first["comments_count"]).to eq(1)
       expect(data.first["likes_count"]).to eq(1)
+      expect(data.first["author"]).to eq(
+        "uuid" => users(:two).uuid, "id" => users(:two).id, "name" => "Grace", "lastname" => "Hopper"
+      )
       expect(data.first["comments"].first["user"]["name"]).to eq(users(:two).name)
       expect(data.first["likes"].first["user"]["name"]).to eq(users(:two).name)
       expect(response.parsed_body["meta"]).to include(

@@ -23,7 +23,7 @@ module Posts
         .where(user_id: user.following.select(:id), status: Post.statuses[:published])
         .where(visibility: %w[public followers])
         .with_counts
-        .includes(comments: :user, likes: :user)
+        .includes(:user, comments: :user, likes: :user)
         .with_attached_media
         .order(created_at: :desc, id: :desc)
     end

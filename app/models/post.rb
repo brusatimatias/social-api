@@ -44,10 +44,14 @@ class Post < ApplicationRecord
   before_update :set_edited_at, if: :content_changed?
 
   def as_json(options = {})
-    super(options).merge("media" => media_urls)
+    super(options).merge("media" => media_urls, "author" => author_json)
   end
 
   private
+
+  def author_json
+    { "uuid" => user.uuid, "id" => user.id, "name" => user.name, "lastname" => user.lastname }
+  end
 
   def media_urls
     media.map do |file|

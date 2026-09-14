@@ -10,6 +10,9 @@ RSpec.describe "Api::V1::Posts", type: :request do
       post = response.parsed_body["data"].find { |item| item["id"] == posts(:one).id }
       expect(post["comments_count"]).to eq(1)
       expect(post["likes_count"]).to eq(1)
+      expect(post["author"]).to eq(
+        "uuid" => users(:one).uuid, "id" => users(:one).id, "name" => "Ada", "lastname" => "Lovelace"
+      )
       expect(response.parsed_body["meta"]["statuses"]).to eq(Post.statuses.keys)
     end
 
@@ -103,6 +106,9 @@ RSpec.describe "Api::V1::Posts", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body["data"]["content"]).to eq(posts(:one).content)
+      expect(response.parsed_body["data"]["author"]).to eq(
+        "uuid" => users(:one).uuid, "id" => users(:one).id, "name" => "Ada", "lastname" => "Lovelace"
+      )
       expect(response.parsed_body["data"]["comments"].map { |comment| comment["content"] })
         .to include(comments(:one).content)
       comment = response.parsed_body["data"]["comments"].find { |item| item["id"] == comments(:one).id }
