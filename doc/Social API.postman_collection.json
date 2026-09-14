@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Social API",
-    "description": "Ruby on Rails 7 social API: users register, follow each other, post content, and comment/like posts. All responses follow the { data, errors, meta } envelope. Run 'Register' or 'Login' first — the token is saved automatically to the {{token}} collection variable and used by every other request.",
+    "description": "Ruby on Rails 7 social API: users register, follow each other, post content, and comment/like posts. All responses follow the { data, errors, meta } envelope. Run 'Register' or 'Login' first — the token is saved automatically to the {{token}} collection variable and used by every other request. This collection is the endpoint documentation for the API — each request includes the parameters and example responses for that endpoint.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {

@@ -10,6 +10,7 @@
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Usage](#usage)
+- [API Documentation](#api-documentation)
 
 ## Description
 
@@ -114,6 +115,10 @@ Our API follows the REST (Representational State Transfer) architectural style, 
 - **Authentication**: Some actions may require authentication. You can use authentication tokens, API keys, or any other mechanism provided by the API.
 
 - **Response Format**: The API returns data in a common format such as JSON. You should parse the responses to obtain the information you need.
+
+## API Documentation
+
+The full documentation for every endpoint (requests, parameters, and example responses) is available as a Postman collection: [`doc/Social API.postman_collection.json`](doc/Social%20API.postman_collection.json). Import it into Postman to explore and try out the API.
 
 If you're a developer interested in using our API or have any questions, please don't hesitate to get in touch:
 
