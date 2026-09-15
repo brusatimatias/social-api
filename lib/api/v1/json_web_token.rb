@@ -4,13 +4,9 @@ module Api
       ALGORITHM = "HS256".freeze
       EXPIRATION = 24.hours
 
-      def self.secret
-        ENV.fetch("SECRET_KEY_BASE") { Rails.application.secret_key_base }
-      end
-
-      def self.encode(user)
+      def self.encode(user = nil)
         JWT.encode(
-          { sub: user.id, uuid: user.uuid, jti: SecureRandom.uuid, exp: EXPIRATION.from_now.to_i },
+          data_to_encode(user),
           secret,
           ALGORITHM
         )
@@ -28,6 +24,18 @@ module Api
       rescue JWT::DecodeError
         nil
       end
+
+      def self.secret
+        ENV.fetch("SECRET_KEY_BASE") { Rails.application.secret_key_base }
+      end
+
+      def self.data_to_encode(user)
+        return { service: "social-api" } if user.blank?
+
+        { sub: user.id, uuid: user.uuid, jti: SecureRandom.uuid, exp: EXPIRATION.from_now.to_i }
+      end
+
+      private_class_method :secret, :data_to_encode
     end
   end
 end
