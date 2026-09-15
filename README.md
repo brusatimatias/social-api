@@ -85,6 +85,8 @@ Follow these steps to get started with this API:
 
    Replace `yourusername` and `yourpassword` with your actual database username and password.
 
+   See `.env.example` for the full list of environment variables, including `SECRET_KEY_BASE` (JWT signing), `CORS_ORIGINS`, and `SOCIAL_MESSAGING_API_URL` (base URL of `social-messaging-api`, used to sync users — that app's `SECRET_KEY` must match this app's `SECRET_KEY_BASE`).
+
 4. **Create the database and run migrations:**
 
    ```bash

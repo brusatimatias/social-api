@@ -23,7 +23,7 @@ bundle exec rubocop -A                            # autocorrect
 
 CI (`.github/workflows/ci.yml`) runs `rspec` and `rubocop` as separate jobs against Postgres 15 on every push/PR — always run both locally before considering a change done.
 
-Required env vars (see `.env.example`): `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`. `SECRET_KEY_BASE` is optional — if unset, JWT signing falls back to `Rails.application.secret_key_base` (Rails credentials).
+Required env vars (see `.env.example`): `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`. `SECRET_KEY_BASE` is optional — if unset, JWT signing falls back to `Rails.application.secret_key_base` (Rails credentials). `SOCIAL_MESSAGING_API_URL` is the base URL of `social-messaging-api`, used by `SocialMessagingApiClient` to sync users; that app's `SECRET_KEY` must match this app's `SECRET_KEY_BASE` for the service token to validate there. `CORS_ORIGINS` (comma-separated, defaults to `http://localhost:8000`) configures `config/initializers/cors.rb`.
 
 ## Architecture
 
