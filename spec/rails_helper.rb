@@ -15,13 +15,7 @@ RSpec.configure do |config|
 
   config.include Module.new {
     def auth_headers(user = users(:one))
-      token = JWT.encode(
-        { sub: user.id, exp: 24.hours.from_now.to_i },
-        Rails.application.secret_key_base,
-        "HS256"
-      )
-
-      { "Authorization" => "Bearer #{token}" }
+      { "Authorization" => "Bearer #{Api::V1::JsonWebToken.encode(user)}" }
     end
   }, type: :request
 end
