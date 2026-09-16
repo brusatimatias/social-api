@@ -131,6 +131,32 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "messaging API sync" do
+    it "enqueues an upsert job on create" do
+      expect do
+        User.create!(name: "New", lastname: "Owner", email: "new.owner@example.com", password: "password")
+      end.to have_enqueued_job(SyncUserToMessagingApiJob)
+        .with(SyncUserToMessagingApiJob::UPSERT, anything, hash_including(name: "New"))
+    end
+
+    it "enqueues an upsert job when name or lastname changes" do
+      expect { users(:one).update!(name: "Updated") }
+        .to have_enqueued_job(SyncUserToMessagingApiJob)
+        .with(SyncUserToMessagingApiJob::UPSERT, users(:one).uuid, anything)
+    end
+
+    it "does not enqueue a job for changes unrelated to the synced attributes" do
+      expect { users(:one).update!(email: "updated.one@example.com") }
+        .not_to have_enqueued_job(SyncUserToMessagingApiJob)
+    end
+
+    it "enqueues a delete job on destroy" do
+      expect { users(:one).destroy }
+        .to have_enqueued_job(SyncUserToMessagingApiJob)
+        .with(SyncUserToMessagingApiJob::DELETE, users(:one).uuid)
+    end
+  end
+
   describe "avatar" do
     def attach(user, filename, content_type)
       user.avatar.attach(

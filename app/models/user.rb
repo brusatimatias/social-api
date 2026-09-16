@@ -32,6 +32,9 @@ class User < ApplicationRecord
   before_validation :assign_uuid, on: :create
   before_validation :normalize_email
 
+  after_commit :sync_to_messaging_api, on: %i[create update], if: :sync_relevant_attributes_changed?
+  after_commit :remove_from_messaging_api, on: :destroy
+
   validates :name, :lastname, presence: true
   validates :email, presence: true, uniqueness: { case_sensitive: false }, format: URI::MailTo::EMAIL_REGEXP
   validates :uuid, presence: true, uniqueness: true
@@ -76,5 +79,19 @@ class User < ApplicationRecord
 
   def normalize_email
     self.email = email.strip.downcase if email
+  end
+
+  def sync_relevant_attributes_changed?
+    saved_change_to_name? || saved_change_to_lastname?
+  end
+
+  def sync_to_messaging_api
+    SyncUserToMessagingApiJob.perform_later(
+      SyncUserToMessagingApiJob::UPSERT, uuid, name: name, lastname: lastname, full_name: full_name
+    )
+  end
+
+  def remove_from_messaging_api
+    SyncUserToMessagingApiJob.perform_later(SyncUserToMessagingApiJob::DELETE, uuid)
   end
 end
