@@ -27,7 +27,7 @@ This Social API is developed using Ruby on Rails 7 and its primary goal is to al
 
 This diagram illustrates how our system operates and how clients interact with our services through Ruby on Rails:
 
-![System Architecture](doc/Social%20App-architecture.drawio.png)
+![System Architecture](doc/Social%20App-architecture.drawio%20v2.png)
 
 The architecture demonstrates the flow of data and requests from clients to our Rails-based services. It highlights the essential components that ensure a smooth interaction experience.
 
