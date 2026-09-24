@@ -35,3 +35,8 @@
 
 .DS_Store
 .env
+
+# Claude
+.claude/settings.local.json
+.claude/.verify-state
+.claude/.verify-attempts
