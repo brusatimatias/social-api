@@ -9,19 +9,25 @@
 - [Technologies Used](#technologies-used)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
+- [Maintenance Tasks](#maintenance-tasks)
+- [Running Tests](#running-tests)
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
 
 ## Description
 
-This Social API is developed using Ruby on Rails 7 and its primary goal is to allow users to register, follow other users, and manage their posts.
+This Social API is developed using Ruby on Rails 7 and its primary goal is to allow users to register, follow other users, publish posts, and comment on and like posts. User profiles are synced to a companion service, `social-messaging-api`.
 
 ## Features
 
-- **User Registration**: Users can securely register and authenticate on the platform.
-- **User Following**: Users can follow other users and receive updates on their activities.
-- **Content Posting**: Users can create, edit, and delete posts that can include text, images, and multimedia.
-- **User Authentication:** User authentication is done securely, ensuring that only authorized users can access your personal data.
+- **User Registration and Authentication**: Users register and log in to get a JWT. Logging out revokes the token right away. Users can update their profile (including an avatar) or deactivate their account.
+- **User Following**: Users can follow and unfollow other users, and list anyone's followers and following.
+- **User Search**: Users can search for other users by name, last name or email, with paginated results.
+- **Content Posting**: Users can create, edit and delete posts with text and media attachments. A post can be `draft`, `published` or `archived`.
+- **Post Visibility**: Each post is `public`, `followers` (visible only to people who follow the author) or `private` (visible only to the author).
+- **Comments and Likes**: Users can comment on and like any post they're allowed to see.
+- **Feed**: A paginated feed shows the newest published posts the user can see, with comment and like counts.
+- **Messaging Sync**: User profiles are kept in sync with `social-messaging-api` automatically, with a rake task to backfill them (see [Maintenance Tasks](#maintenance-tasks)).
 
 ## System Architecture
 
@@ -44,7 +50,11 @@ This API employs a variety of technologies and tools, including:
 - Ruby 3.2.1
 - Ruby on Rails 7
 - PostgreSQL as the relational database.
-- [List any other technologies and gems you might be using in your project]
+- JWT (`jwt` gem) for stateless authentication, with a revocation denylist for logout.
+- `paranoia` for soft-deleting users and posts.
+- Active Storage for post media and user avatars.
+- Faraday as the HTTP client to sync users to `social-messaging-api`.
+- RSpec and RuboCop for tests and linting (run in CI via GitHub Actions).
 
 ## Prerequisites
 
@@ -53,7 +63,7 @@ Before starting to use this API, make sure you have the following:
 - Ruby 3.2.1 installed on your system.
 - Ruby on Rails 7 installed.
 - PostgreSQL installed and configured for the database.
-- ...
+- A running instance of `social-messaging-api` if you want user changes synced there (optional for local development).
 
 ## Installation
 
@@ -104,19 +114,84 @@ Follow these steps to get started with this API:
 
    Your API should now be running locally at `http://localhost:3000`. You can access it using a web browser or make API requests using tools like `curl` or Postman.
 
+## Maintenance Tasks
+
+- **Purge expired revoked tokens.** Logging out stores the token's `jti` in a denylist table that nothing cleans up automatically. Run this periodically (e.g. via cron) to delete entries whose JWT has already expired:
+
+  ```bash
+  rails revoked_tokens:purge_expired
+  ```
+
+- **Backfill users to `social-messaging-api`.** New and updated users are synced automatically through a background job, but users that existed before that integration (or that were changed while `social-messaging-api` was unreachable and exhausted their retries) need a one-off backfill:
+
+  ```bash
+  rails social_messaging_api:sync_users
+  ```
+
+  It upserts every active (not soft-deleted) user, so it's safe to re-run. It calls the API synchronously, without retries, and stops at the first error — fix the cause and run it again. It does not remove deactivated users from `social-messaging-api`.
+
+## Running Tests
+
+```bash
+bundle exec rspec                          # full test suite
+bundle exec rubocop --config .rubocop.yml  # lint
+```
+
+Both run in CI on every push and pull request.
+
 ## Usage
 
-Our API follows the REST (Representational State Transfer) architectural style, which is based on simple principles for accessing and manipulating resources using standard HTTP methods. Here's an overview of how to use it:
+The API is REST-style JSON over HTTP. Every endpoint lives under `/api/v1` (e.g. `http://localhost:3000/api/v1/feed`).
 
-- **HTTP Methods**: Use standard HTTP methods to interact with the API:
-  - `GET`: To retrieve information.
-  - `POST`: To create new resources.
-  - `PUT` or `PATCH`: To update existing resources.
-  - `DELETE`: To delete resources.
+### Authentication
 
-- **Authentication**: Some actions may require authentication. You can use authentication tokens, API keys, or any other mechanism provided by the API.
+Authentication uses JWTs. Register or log in to get a token:
 
-- **Response Format**: The API returns data in a common format such as JSON. You should parse the responses to obtain the information you need.
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"auth": {"email": "jane@example.com", "password": "secret123"}}'
+```
+
+The response includes `data.token`. Send it on every other request as a Bearer token:
+
+```bash
+curl http://localhost:3000/api/v1/auth/me \
+  -H "Authorization: Bearer <token>"
+```
+
+- Only `POST /auth/register` and `POST /auth/login` work without a token. Every other endpoint returns `401 Unauthorized` if the token is missing, invalid, expired or revoked.
+- Tokens expire after 24 hours.
+- `DELETE /auth/logout` revokes the current token right away.
+- `DELETE /auth/me` deactivates the account (soft delete). After that, the same email can be used to register again.
+
+### Response format
+
+Every response, whether it succeeds or fails, has the same structure:
+
+```json
+{
+  "data": { },
+  "errors": [],
+  "meta": {}
+}
+```
+
+- On success, `data` holds the result and `errors` is empty.
+- On failure, `data` is `null` and `errors` lists messages. The HTTP status tells you the kind of failure: `400` for missing params or invalid pagination, `401` unauthorized, `404` not found, `422` validation errors.
+
+### Pagination
+
+Paginated endpoints (`GET /feed`, `GET /users/search`) accept `page` (default `1`) and `per_page` (default `20`, max `50`). Pagination details come in `meta`:
+
+```json
+"meta": { "current_page": 1, "per_page": 20, "total_pages": 3, "total_count": 42 }
+```
+
+### Identifiers
+
+- Users are addressed by their `uuid` (e.g. `POST /users/:uuid/follow`).
+- Posts, comments and likes are addressed by numeric `id` (e.g. `POST /posts/:post_id/comments`).
 
 ## API Documentation
 
